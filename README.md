@@ -1,204 +1,213 @@
-# Documentación del Proyecto: Implementación de JWT
+# Biblioteca API Boilerplate
 
-## Descripción del Proyecto
-Este proyecto implementa la autenticación y autorización mediante **JSON Web Token (JWT)** para un sistema basado en .NET Core. Se busca garantizar la seguridad de las solicitudes HTTP, utilizando un token que valida la identidad del usuario en rutas protegidas.
-
-## Índice
-- [Requisitos Previos](#requisitos-previos)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Instalación de Librerías](#instalación-de-librerías)
-- [Capa por Capa](#capa-por-capa)
-  - [Capa de Backend](#capa-de-backend)
-  - [Middleware](#middleware)
-  - [Frontend](#frontend)
-- [Flujo del Sistema](#flujo-del-sistema)
-- [Pruebas y Validación](#pruebas-y-validación)
-- [Conclusión](#conclusión)
-
----
-
-## Requisitos Previos
-
-1. **Herramientas Necesarias:**
-   - **Visual Studio** o **Visual Studio Code** para el desarrollo backend.
-   - **Node.js y npm** para pruebas frontend si se utiliza React o Angular.
-   - Postman o cualquier herramienta para probar APIs.
-2. **Librerías Específicas:**
-   - **Microsoft.AspNetCore.Authentication.JwtBearer** para .NET.
-   - (Opcional) Axios para realizar solicitudes HTTP desde el cliente.
-3. **Conocimientos Básicos:**
-   - Principios de arquitectura de software por capas.
-   - Conceptos de autenticación y autorización.
-
----
+Este proyecto es una plantilla genérica para desarrollar APIs en .NET con una arquitectura de capas bien definida. Está diseñado para ser reutilizable y simplificar la creación de nuevas APIs, minimizando la necesidad de configuraciones iniciales.
 
 ## Estructura del Proyecto
-El proyecto está estructurado en tres capas principales:
+El proyecto utiliza una arquitectura de tres capas:
 
-1. **Capa de Backend:**
-   - Se encarga de gestionar la lógica del servidor, generar y validar tokens JWT.
-2. **Middleware:**
-   - Intercepta las solicitudes para aplicar validaciones y autorización antes de llegar al controlador.
-3. **Frontend:**
-   - Se encarga de interactuar con los usuarios y enviar el token en las solicitudes protegidas.
+### 1. **Biblioteca.Application**
+   - **Responsabilidad:** Contiene la lógica de negocio y las reglas que controlan el flujo de datos entre la capa de dominio y la infraestructura.
+   - **¿Por qué?** Separa las reglas de negocio para que sean independientes del almacenamiento de datos y de la interfaz de usuario.
 
----
+### 2. **Biblioteca.Domain**
+   - **Responsabilidad:** Define las entidades principales, interfaces, y contratos del dominio. 
+   - **¿Por qué?** Facilita el cumplimiento del principio de "Dominio Rico" y asegura que las reglas de negocio estén correctamente representadas en las entidades.
 
-## Instalación de Librerías
-
-### Backend (.NET Core)
-
-1. **Configurar el Proyecto Backend:**
-   ```bash
-   dotnet new webapi -n JwtAuthExample
-   cd JwtAuthExample
-   ```
-
-2. **Instalar Dependencias JWT:**
-   ```bash
-   dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
-   ```
-
-3. **Instalar Dependencias Adicionales:**
-   ```bash
-   dotnet add package Microsoft.IdentityModel.Tokens
-   ```
-
-### Frontend (Opcional, por ejemplo, React)
-
-1. **Crear el Proyecto React:**
-   ```bash
-   npx create-react-app jwt-auth-client
-   cd jwt-auth-client
-   ```
-
-2. **Instalar Axios para manejar peticiones HTTP:**
-   ```bash
-   npm install axios
-   ```
+### 3. **Biblioteca.Infrastructure**
+   - **Responsabilidad:** Implementa la interacción con la base de datos y otros sistemas externos.
+   - **¿Por qué?** Mantiene el acceso a los datos desacoplado del resto de la aplicación, lo que facilita cambios o mejoras en la infraestructura sin afectar la lógica de negocio.
 
 ---
 
-## Capa por Capa
+## Tecnologías y Librerías
+Estas son las librerías utilizadas y su propósito:
 
-### Capa de Backend
+### 1. **BCrypt.Net-Next**
+   - **Uso:** Encriptación de contraseñas para asegurar datos sensibles.
+   - **Instalación:**
+     ```bash
+     dotnet add package BCrypt.Net-Next
+     ```
 
-1. **Generación del Token JWT:**
-   En el controlador de autenticación, se genera el token cuando el usuario inicia sesión correctamente:
-   ```csharp
-   using System.IdentityModel.Tokens.Jwt;
-   using System.Security.Claims;
-   using Microsoft.IdentityModel.Tokens;
-   
-   public class AuthController : ControllerBase
-   {
-       [HttpPost("login")]
-       public IActionResult Login(UserLoginDto user)
-       {
-           if (user.Username == "admin" && user.Password == "password")
-           {
-               var claims = new[]
-               {
-                   new Claim(JwtRegisteredClaimNames.Sub, user.Username),
-                   new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-               };
+### 2. **Microsoft.AspNetCore.Authentication.JwtBearer**
+   - **Uso:** Implementación de autenticación basada en JWT (JSON Web Tokens).
+   - **Instalación:**
+     ```bash
+     dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+     ```
 
-               var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("clave_secreta_super_segura"));
-               var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+### 3. **Microsoft.EntityFrameworkCore**
+   - **Uso:** ORM para manejar la interacción con bases de datos de manera eficiente y tipada.
+   - **Instalación:**
+     ```bash
+     dotnet add package Microsoft.EntityFrameworkCore
+     ```
 
-               var token = new JwtSecurityToken(
-                   issuer: "tu_dominio.com",
-                   audience: "tu_dominio.com",
-                   claims: claims,
-                   expires: DateTime.Now.AddMinutes(30),
-                   signingCredentials: creds
-               );
+### 4. **Microsoft.EntityFrameworkCore.SqlServer**
+   - **Uso:** Proveedor específico para bases de datos SQL Server.
+   - **Instalación:**
+     ```bash
+     dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+     ```
 
-               return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
-           }
-           return Unauthorized();
-       }
-   }
-   ```
-
-2. **Configuración del Middleware para Validación de Tokens:**
-   En el archivo `Program.cs` o `Startup.cs`:
-   ```csharp
-   services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-       .AddJwtBearer(options =>
-       {
-           options.TokenValidationParameters = new TokenValidationParameters
-           {
-               ValidateIssuer = true,
-               ValidateAudience = true,
-               ValidateLifetime = true,
-               ValidateIssuerSigningKey = true,
-               ValidIssuer = "tu_dominio.com",
-               ValidAudience = "tu_dominio.com",
-               IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("clave_secreta_super_segura"))
-           };
-       });
-
-   app.UseAuthentication();
-   app.UseAuthorization();
-   ```
-
-### Middleware
-
-El Middleware valida las solicitudes entrantes antes de que lleguen a los controladores protegidos. Si el token no es válido o está ausente, la solicitud es rechazada automáticamente con un código **401 Unauthorized**.
-
-### Frontend
-
-1. **Guardar y Usar el Token:**
-   Cuando el usuario inicia sesión, el cliente guarda el token en un lugar seguro (por ejemplo, LocalStorage o Cookies).
-   ```javascript
-   import axios from 'axios';
-
-   const login = async () => {
-       const response = await axios.post('http://localhost:5000/login', {
-           username: 'admin',
-           password: 'password',
-       });
-       localStorage.setItem('token', response.data.token);
-   };
-   ```
-
-2. **Enviar el Token en las Solicitudes:**
-   ```javascript
-   const getProtectedData = async () => {
-       const token = localStorage.getItem('token');
-       const response = await axios.get('http://localhost:5000/protected', {
-           headers: {
-               Authorization: `Bearer ${token}`,
-           },
-       });
-       console.log(response.data);
-   };
-   ```
+### 5. **Newtonsoft.Json**
+   - **Uso:** Manejo de serialización y deserialización de objetos JSON.
+   - **Instalación:**
+     ```bash
+     dotnet add package Newtonsoft.Json
+     ```
 
 ---
 
-## Flujo del Sistema
+## Instalación y Configuración
 
-1. El cliente envía las credenciales al backend.
-2. El backend valida las credenciales y genera un JWT.
-3. El cliente almacena el JWT y lo envía en las solicitudes subsecuentes.
-4. El middleware valida el JWT antes de permitir el acceso a las rutas protegidas.
-5. Si el token es válido, la solicitud se procesa; si no, se rechaza.
+### 1. Clonar el repositorio
+```bash
+git clone <URL_DEL_REPOSITORIO>
+cd <NOMBRE_DEL_PROYECTO>
+```
+
+### 2. Restaurar las dependencias
+```bash
+dotnet restore
+```
+
+### 3. Configurar la Base de Datos (SQL Server)
+- Modifica el archivo `appsettings.json` en el proyecto `Biblioteca.Infrastructure`:
+  ```json
+  {
+    "ConnectionStrings": {
+      "DefaultConnection": "Server=<SERVIDOR>;Database=<NOMBRE_BD>;User Id=<USUARIO>;Password=<CONTRASEÑA>;"
+    }
+  }
+  ```
+
+### 4. Crear la Base de Datos
+Ejecuta las migraciones para crear las tablas:
+```bash
+dotnet ef migrations add InitialCreate -p Biblioteca.Infrastructure -s Biblioteca.API
+```
+```bash
+dotnet ef database update -p Biblioteca.Infrastructure -s Biblioteca.API
+```
 
 ---
 
-## Pruebas y Validación
+## Estructura del Código
 
-1. **Usar Postman:**
-   - Hacer una petición POST a `/login` con credenciales válidas y recibir el token.
-   - Usar el token recibido para acceder a rutas protegidas con un encabezado `Authorization: Bearer <token>`.
+### **Controladores (API)**
+Los controladores están en `Biblioteca.API` y exponen los endpoints. Ejemplo de un controlador:
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+public class UsuariosController : ControllerBase
+{
+    private readonly IUsuarioService _usuarioService;
 
-2. **Errores Comunes:**
-   - Token expirado.
-   - Token inválido debido a una clave secreta incorrecta.
+    public UsuariosController(IUsuarioService usuarioService)
+    {
+        _usuarioService = usuarioService;
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register(UsuarioDto usuarioDto)
+    {
+        var result = await _usuarioService.RegisterUsuarioAsync(usuarioDto);
+        return Ok(result);
+    }
+}
+```
+
+### **Servicios (Application)**
+La lógica de negocio está en `Biblioteca.Application`:
+```csharp
+public class UsuarioService : IUsuarioService
+{
+    private readonly IUsuarioRepository _usuarioRepository;
+
+    public UsuarioService(IUsuarioRepository usuarioRepository)
+    {
+        _usuarioRepository = usuarioRepository;
+    }
+
+    public async Task<bool> RegisterUsuarioAsync(UsuarioDto usuarioDto)
+    {
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(usuarioDto.Password);
+        var usuario = new Usuario { Nombre = usuarioDto.Nombre, Password = hashedPassword };
+        return await _usuarioRepository.AddAsync(usuario);
+    }
+}
+```
+
+### **Repositorio (Infrastructure)**
+Acceso a la base de datos en `Biblioteca.Infrastructure`:
+```csharp
+public class UsuarioRepository : IUsuarioRepository
+{
+    private readonly AppDbContext _context;
+
+    public UsuarioRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<bool> AddAsync(Usuario usuario)
+    {
+        await _context.Usuarios.AddAsync(usuario);
+        return await _context.SaveChangesAsync() > 0;
+    }
+}
+```
 
 ---
 
-## Conclusión
-La autenticación y autorización con JWT es una solución eficaz y escalable para sistemas distribuidos. Esta arquitectura asegura que solo los usuarios autenticados puedan acceder a los recursos protegidos, manteniendo el sistema seguro y bien estructurado.
+## Autenticación con JWT
+
+### Configuración en `Startup.cs` o `Program.cs`
+```csharp
+services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = "tu_dominio.com",
+            ValidAudience = "tu_dominio.com",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("clave_secreta"))
+        };
+    });
+```
+
+---
+
+## Ejecución del Proyecto
+### 1. Ejecutar la API
+```bash
+dotnet run --project Biblioteca.API
+```
+
+### 2. Acceder a Swagger
+Una vez ejecutada la API, abre el navegador y accede a:
+```
+http://localhost:<PUERTO>/swagger
+```
+
+---
+
+## Próximos Pasos
+1. Agregar más módulos reutilizables (autorización, auditorías, etc.).
+2. Crear pruebas unitarias para asegurar la estabilidad del sistema.
+3. Documentar configuraciones avanzadas (caching, logging, etc.).
+
+---
+
+## Contribuciones
+¡Se aceptan contribuciones para mejorar esta plantilla! Por favor, crea un *pull request* o abre un *issue* para sugerencias.
+
+---
+
+## Licencia
+Este proyecto está licenciado bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
