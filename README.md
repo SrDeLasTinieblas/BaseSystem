@@ -30,7 +30,7 @@ El proyecto utiliza una arquitectura de tres capas:
    - La capa de Infrastructure maneja la persistencia de datos (a través de AppDbContext) o cualquier servicio adicional necesario (como validaciones de contraseñas o autenticación).
    - La respuesta es devuelta al controlador, que la envía al cliente.
 
-### Flujo del Proyecto 🔄
+### Flujo de Autenticación JWT 🔐
    - **Login de Usuario:**
         - El usuario envía sus credenciales.
         - Si las credenciales son correctas, el servidor genera un JWT que contiene información sobre el usuario.
