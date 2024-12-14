@@ -22,8 +22,8 @@ El proyecto utiliza una arquitectura de tres capas:
    - Carpeta Persistence: Contiene la clase AppDbContext.cs, que es la clase encargada de interactuar con la base de datos utilizando Entity Framework Core.
    - Carpeta Services: Aquí se implementan los servicios generales, como aquellos que interactúan con APIs externas o realizan tareas comunes.
 
----
-### 4. **Flujo del Proyecto 🔄**
+
+### Flujo del Proyecto 🔄
    - El usuario realiza una petición (por ejemplo, para registrarse).
    - El controlador recibe la petición y la pasa al caso de uso correspondiente en la capa de Application.
    - La capa de Application procesa la lógica del negocio utilizando las entidades del Domain.
