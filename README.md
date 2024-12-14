@@ -1,4 +1,4 @@
-# Biblioteca API Boilerplate
+# Proyecto API .NET 6
 
 Este proyecto es una plantilla genérica para desarrollar APIs en .NET con una arquitectura de capas bien definida. Está diseñado para ser reutilizable y simplificar la creación de nuevas APIs, minimizando la necesidad de configuraciones iniciales.
 
