@@ -74,10 +74,12 @@ Estas son las librerías utilizadas y su propósito:
    - **Microsoft.AspNetCore.Authentication.JwtBearer:** Permite autenticar solicitudes utilizando JWT (JSON Web Tokens). Asegura que solo los usuarios autenticados puedan acceder a ciertas rutas.
    - **Microsoft.EntityFrameworkCore y Microsoft.EntityFrameworkCore.SqlServer:** Son las bibliotecas para interactuar con bases de datos SQL Server a través de Entity Framework Core.
    - **Newtonsoft.Json:** Utilizado para la serialización y deserialización de objetos JSON, muy útil en la interacción con APIs.
----
 
 ## ¿Por Qué Usar Esta Arquitectura? 🤔
-
+   - **Escalabilidad:** Separando las responsabilidades en capas, el proyecto es fácilmente escalable. Puedes agregar nuevas funcionalidades sin afectar el código existente.
+   - **Mantenimiento:**  La arquitectura limpia permite un mantenimiento más fácil y rápido. Los cambios en una capa no afectan directamente a otras capas.
+   - **Pruebas:** Es más fácil realizar pruebas unitarias debido a que cada capa tiene responsabilidades bien definidas. Puedes probar cada capa por separado sin necesidad de depender de otras capas.
+   - **Flexibilidad:** Permite reutilizar las clases y servicios en diferentes proyectos, haciendo que el desarrollo de APIs sea más rápido.
 
 
 ## Instalación y Configuración
