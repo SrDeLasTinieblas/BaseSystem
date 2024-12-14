@@ -1,25 +1,37 @@
-# Proyecto API .NET 6
+# Proyecto API .net 6 con Arquitectura Limpia 🏗️
 
 Este proyecto es una plantilla genérica para desarrollar APIs en .NET con una arquitectura de capas bien definida. Está diseñado para ser reutilizable y simplificar la creación de nuevas APIs, minimizando la necesidad de configuraciones iniciales.
 
-## Estructura del Proyecto
+## Carpetas Principales 📂
 El proyecto utiliza una arquitectura de tres capas:
 
-### 1. **Biblioteca.Application**
+### 1. **Biblioteca.Application 🚀**
    - **Responsabilidad:** Contiene la lógica de negocio y las reglas que controlan el flujo de datos entre la capa de dominio y la infraestructura.
    - **¿Por qué?** Separa las reglas de negocio para que sean independientes del almacenamiento de datos y de la interfaz de usuario.
+   - Carpeta UseCases: Cada caso de uso debe estar aquí, representando acciones específicas que la API puede ejecutar (por ejemplo, crear un usuario, autenticar un usuario, etc.).
+      Ejemplo de un caso de uso: Crear usuario, obtener usuarios, etc.
 
-### 2. **Biblioteca.Domain**
+### 2. **Biblioteca.Domain 🔑**
    - **Responsabilidad:** Define las entidades principales, interfaces, y contratos del dominio. 
    - **¿Por qué?** Facilita el cumplimiento del principio de "Dominio Rico" y asegura que las reglas de negocio estén correctamente representadas en las entidades.
+   - Carpeta Entities: Contiene las clases que representan las entidades de tu base de datos y cualquier lógica relacionada con esas entidades.
 
-### 3. **Biblioteca.Infrastructure**
+### 3. **Biblioteca.Infrastructure 🏗️**
    - **Responsabilidad:** Implementa la interacción con la base de datos y otros sistemas externos.
    - **¿Por qué?** Mantiene el acceso a los datos desacoplado del resto de la aplicación, lo que facilita cambios o mejoras en la infraestructura sin afectar la lógica de negocio.
+   - Carpeta Persistence: Contiene la clase AppDbContext.cs, que es la clase encargada de interactuar con la base de datos utilizando Entity Framework Core.
+   - Carpeta Services: Aquí se implementan los servicios generales, como aquellos que interactúan con APIs externas o realizan tareas comunes.
 
 ---
+### 4. **Flujo del Proyecto 🔄**
+   - El usuario realiza una petición (por ejemplo, para registrarse).
+   - El controlador recibe la petición y la pasa al caso de uso correspondiente en la capa de Application.
+   - La capa de Application procesa la lógica del negocio utilizando las entidades del Domain.
+   - La capa de Infrastructure maneja la persistencia de datos (a través de AppDbContext) o cualquier servicio adicional necesario (como validaciones de contraseñas o autenticación).
+   - La respuesta es devuelta al controlador, que la envía al cliente.
 
-## Tecnologías y Librerías
+
+## Instalación de Dependencias 📦
 Estas son las librerías utilizadas y su propósito:
 
 ### 1. **BCrypt.Net-Next**
@@ -56,8 +68,17 @@ Estas son las librerías utilizadas y su propósito:
      ```bash
      dotnet add package Newtonsoft.Json
      ```
-
 ---
+## Explicación de las Librerías 🧑‍💻:
+   - **BCrypt.Net-Next:** Utilizado para la encriptación de contraseñas. Ayuda a mantener las contraseñas de los usuarios seguras mediante un algoritmo de hash.
+   - **Microsoft.AspNetCore.Authentication.JwtBearer:** Permite autenticar solicitudes utilizando JWT (JSON Web Tokens). Asegura que solo los usuarios autenticados puedan acceder a ciertas rutas.
+   - **Microsoft.EntityFrameworkCore y Microsoft.EntityFrameworkCore.SqlServer:** Son las bibliotecas para interactuar con bases de datos SQL Server a través de Entity Framework Core.
+   - **Newtonsoft.Json:** Utilizado para la serialización y deserialización de objetos JSON, muy útil en la interacción con APIs.
+---
+
+## ¿Por Qué Usar Esta Arquitectura? 🤔
+
+
 
 ## Instalación y Configuración
 
