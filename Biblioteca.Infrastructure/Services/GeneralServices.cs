@@ -56,23 +56,15 @@ namespace Biblioteca.Infrastructure.Services
         public JArray ConvertToJSON(string response)
         {
             var parts = response.Split('°');
-            //if (parts.Length != 3)
-            //    throw new FormatException("El formato de respuesta no es válido. Se esperaban 3 partes separadas por '°'.");
-
             var headers = parts[0].Split('|');
             var types = parts[1].Split('|');
             var data = parts[2].Split('¬');
-
-            //if (headers.Length != types.Length)
-            //    throw new FormatException("El número de encabezados no coincide con el número de tipos.");
 
             var jsonArray = new JArray();
 
             foreach (var row in data)
             {
                 var values = row.Split('|');
-                //if (values.Length != headers.Length)
-                //    throw new FormatException("El número de valores en una fila no coincide con el número de encabezados.");
 
                 var jsonObject = new JObject();
 
