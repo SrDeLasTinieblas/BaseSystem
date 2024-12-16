@@ -72,15 +72,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("RequireSuperAdminRole", policy => policy.RequireRole("SuperAdmin"));
+    options.AddPolicy("RequireSuperAdminRole", policy => 
+        policy.RequireRole("SuperAdmin", "Administrador"));
+
     options.AddPolicy("RequireAdministradorRole", policy => policy.RequireRole("Administrador"));
     options.AddPolicy("RequireProfesorRole", policy => policy.RequireRole("Profesor"));
     options.AddPolicy("RequireAlumnoRole", policy => policy.RequireRole("Alumno"));
 
 });
 
+// Configurar CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000", "http://example.com") // Reemplaza con los dominios permitidos
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // Servicios Personalizados (inyección de dependencias)
 builder.Services.AddScoped<GeneralServices>();
+builder.Services.AddScoped<UsuarioServices>();
 
 var app = builder.Build();
 
