@@ -22,7 +22,6 @@ namespace BaseSystem.Controllers
         [HttpGet("ObtenerUsuarios")]
         public async Task<IActionResult> GetUsuario()
         {
-            var response = await _GeneralServices.ObtenerData("uspListarUsuarioCsv", "");
             string? emailFromToken = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(emailFromToken))
@@ -32,21 +31,21 @@ namespace BaseSystem.Controllers
 
             // Verificar el rol real del usuario en la base de datos
             var tokenReal = await _GeneralServices.ObtenerData("uspObtenerRoleFromTokenCsv", emailFromToken);
-
             if (tokenReal == null)
             {
-                return Unauthorized(); // Usuario no encontrado
+                return Unauthorized(); // Usuario no encontrado 401
             }
 
             if (tokenReal != "SuperAdmin" || tokenReal != "Administrador")
             {
-                return Forbid(); // Acceso denegado
+                return Forbid(); // Acceso denegado 403
             }
 
+            var response = await _GeneralServices.ObtenerData("uspListarUsuarioCsv", "");
             if (response == null)
-                return NotFound();
+                return NotFound(); // 404
 
-            return Ok(response);
+            return Ok(response); // 200
         }
 
 
