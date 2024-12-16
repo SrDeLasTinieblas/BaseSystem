@@ -23,7 +23,6 @@ namespace BaseSystem.Controllers
         public async Task<IActionResult> GetUsuario()
         {
             string? emailFromToken = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
             if (string.IsNullOrEmpty(emailFromToken))
             {
                 return Unauthorized("No hay email en el token"); // No hay email en el token
