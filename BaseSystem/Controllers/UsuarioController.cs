@@ -42,7 +42,7 @@ namespace BaseSystem.Controllers
 
             var response = await _GeneralServices.ObtenerData("uspListarUsuarioCsv", "");
             if (response == null)
-                return NotFound("Not Found"); // 404
+                return NotFound("No hay datos del procedimiento uspListarUsuarioCsv"); // 404
 
             return Ok(response); // 200
         }
