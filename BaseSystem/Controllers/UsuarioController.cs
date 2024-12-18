@@ -32,17 +32,17 @@ namespace BaseSystem.Controllers
             var tokenReal = await _GeneralServices.ObtenerData("uspObtenerRoleFromTokenCsv", emailFromToken);
             if (tokenReal == null)
             {
-                return Unauthorized(); // Usuario no encontrado 401
+                return Unauthorized("Usuario no encontrado"); // Usuario no encontrado 401
             }
 
             if (tokenReal != "SuperAdmin" || tokenReal != "Administrador")
             {
-                return Forbid(); // Acceso denegado 403
+                return Forbid("Acceso denegado"); // Acceso denegado 403
             }
 
             var response = await _GeneralServices.ObtenerData("uspListarUsuarioCsv", "");
             if (response == null)
-                return NotFound(); // 404
+                return NotFound("Not Found"); // 404
 
             return Ok(response); // 200
         }
