@@ -17,12 +17,14 @@ namespace Biblioteca.Infrastructure.Services
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly GeneralServices _GeneralServices;
+        private readonly JWTServices _jWTServices;
 
-        public UsuarioServices(AppDbContext context, IConfiguration configuration, GeneralServices generalServices)
+        public UsuarioServices(AppDbContext context, IConfiguration configuration, GeneralServices generalServices, JWTServices jWTServices)
         {
             _context = context;
             _configuration = configuration;
             _GeneralServices = generalServices;
+            _jWTServices = jWTServices;
         }
 
         public async Task<string> AuthenticateUsuario(string data) // StevenLee893@live.com|PassTextPlain
@@ -78,7 +80,7 @@ namespace Biblioteca.Infrastructure.Services
                 return ("E|La contraseña no coincide");
             }
 
-            var token = GenerateJwtToken(emailInput, rolBD, DuracionTokenSesion);
+            var token = _jWTServices.GenerateJwtToken(emailInput, rolBD, DuracionTokenSesion);
             return token;
         }
 
@@ -97,32 +99,6 @@ namespace Biblioteca.Infrastructure.Services
             return response;
         }
 
-
-        private string GenerateJwtToken(string Email, string role, int expiresMinutes)
-        {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, Email),
-                new Claim(ClaimTypes.Role, role),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            // Obtener la zona horaria de Perú
-            var peruTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
-            var peruTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, peruTimeZone);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: peruTime.AddMinutes(expiresMinutes),
-                signingCredentials: creds);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
 
 
 

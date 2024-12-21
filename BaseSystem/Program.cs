@@ -95,6 +95,7 @@ builder.Services.AddCors(options =>
 // Servicios Personalizados (inyección de dependencias)
 builder.Services.AddScoped<GeneralServices>();
 builder.Services.AddScoped<UsuarioServices>();
+builder.Services.AddScoped<JWTServices>();
 
 var app = builder.Build();
 
