@@ -18,7 +18,7 @@ namespace BaseSystem.Controllers
             _GeneralServices = generalServices;
         }
 
-        [Authorize(Roles = "SuperAdmin")] // PARA CONTROLAR QUIEN PUEDE EJECUTAR ESTE ENDPOINT.
+        [Authorize(Policy = "RequireSuperAdminRole")] // PARA CONTROLAR QUIEN PUEDE EJECUTAR ESTE ENDPOINT.
         [HttpGet("ObtenerUsuarios")]
         public async Task<IActionResult> GetUsuario()
         {

@@ -96,8 +96,14 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<GeneralServices>();
 builder.Services.AddScoped<UsuarioServices>();
 builder.Services.AddScoped<JWTServices>();
+builder.Services.AddScoped<EmailServices>();
 
 var app = builder.Build();
+
+// Servicio de Email (configuración de SMTP)
+//builder.Services.AddScoped<IEmailService>(provider =>
+//    new EmailService("smtp.gmail.com", 587, "happynavidad25@gmail.com", "meic wjxw solk zbgx"));
+
 
 // Configuración de Swagger (para desarrollo, staging y producción)
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging() || app.Environment.IsProduction())
