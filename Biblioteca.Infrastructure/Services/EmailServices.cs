@@ -14,6 +14,7 @@ namespace Biblioteca.Infrastructure.Services
         private readonly GeneralServices _generalServices;
         private readonly SmtpClient _smtpClient;
         private readonly string _fromAddress;
+        private readonly string _bodyTemplate;
 
         public EmailServices(GeneralServices generalServices)
         {
@@ -26,7 +27,7 @@ namespace Biblioteca.Infrastructure.Services
 
             var settingParts = dataEmailSetting.Split('|');
 
-            if (settingParts.Length != 4)
+            if (settingParts.Length != 5)
             {
                 throw new InvalidOperationException("La configuración del email no tiene el formato correcto");
             }
@@ -35,6 +36,7 @@ namespace Biblioteca.Infrastructure.Services
             int port = Convert.ToInt32(settingParts[1]);
             _fromAddress = settingParts[2];
             string password = settingParts[3];
+            _bodyTemplate = settingParts[4];
 
             _smtpClient = new SmtpClient(smtpServer, port)
             {
@@ -46,11 +48,13 @@ namespace Biblioteca.Infrastructure.Services
 
         public async Task SendVerificationEmail(string toEmail, string subject, string verificationCode)
         {
+            string finalBody = _bodyTemplate.Replace("{verificationCode}", verificationCode);
+
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(_fromAddress),
                 Subject = subject, // asunto
-                Body = $"<p>Tu código de verificación es: <strong>{verificationCode}</strong></p>",
+                Body = finalBody, // $"<p>Tu código de verificación es: <strong>{verificationCode}</strong></p>",
                 IsBodyHtml = true,
             };
             mailMessage.To.Add(toEmail);
