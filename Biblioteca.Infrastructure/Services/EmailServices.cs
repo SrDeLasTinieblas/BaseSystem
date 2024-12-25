@@ -46,14 +46,14 @@ namespace Biblioteca.Infrastructure.Services
         }
 
 
-        public async Task SendVerificationEmail(string toEmail, string subject, string verificationCode)
+        public async Task SendVerificationEmail(string toEmail, string asunto, string verificationCode)
         {
             string finalBody = _bodyTemplate.Replace("{verificationCode}", verificationCode);
 
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(_fromAddress),
-                Subject = subject, // asunto
+                Subject = asunto, // asunto
                 Body = finalBody, // $"<p>Tu código de verificación es: <strong>{verificationCode}</strong></p>",
                 IsBodyHtml = true,
             };

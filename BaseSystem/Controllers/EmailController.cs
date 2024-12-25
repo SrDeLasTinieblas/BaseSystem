@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BaseSystem.Controllers
 {
-    public class EmailController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class EmailController : ControllerBase
     {
         private readonly GeneralServices _generalServices;
         private readonly EmailServices _emailServices;
@@ -15,14 +17,14 @@ namespace BaseSystem.Controllers
         }
 
         [HttpGet("sendEmail")]
-        public async Task<IActionResult> SendEmail(string email, string Subject)
+        public async Task<IActionResult> SendEmail(string email, string asunto)
         {
             try
             {
                 var codigoGenerado = _emailServices.GenerateVerificationCode();
                 var emailServices = new EmailServices(_generalServices);
 
-                await emailServices.SendVerificationEmail(email, Subject, codigoGenerado);
+                await emailServices.SendVerificationEmail(email, asunto, codigoGenerado);
                 return Ok(codigoGenerado);
             }
             catch (Exception ex)

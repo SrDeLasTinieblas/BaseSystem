@@ -8,7 +8,7 @@ namespace BaseSystem.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class UsuarioController : Controller
+    public class UsuarioController : ControllerBase
     {
         private readonly GeneralServices _GeneralServices;
 
