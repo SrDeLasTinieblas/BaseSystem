@@ -16,7 +16,7 @@ namespace BaseSystem.Controllers
         public UsuarioController(GeneralServices generalServices)
         {
             _GeneralServices = generalServices;
-        }
+        } 
 
         [Authorize(Policy = "RequireSuperAdminRole")] // PARA CONTROLAR QUIENES PUEDEN TENER ACCESO A ESTA ENDPOINT
         [HttpGet("ObtenerUsuarios")]
