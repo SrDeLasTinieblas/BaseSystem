@@ -20,7 +20,9 @@ namespace BaseSystem.Controllers
             try
             {
                 var codigoGenerado = _emailServices.GenerateVerificationCode();
-                await _emailServices.SendVerificationEmail(email, Subject, codigoGenerado);
+                var emailServices = new EmailServices(_generalServices);
+
+                await emailServices.SendVerificationEmail(email, Subject, codigoGenerado);
                 return Ok(codigoGenerado);
             }
             catch (Exception ex)

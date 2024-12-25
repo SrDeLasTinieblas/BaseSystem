@@ -5,32 +5,51 @@ using System.Net.Mail;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Reflection.Metadata;
 
 namespace Biblioteca.Infrastructure.Services
 {
     public class EmailServices
     {
-
+        private readonly GeneralServices _generalServices;
         private readonly SmtpClient _smtpClient;
         private readonly string _fromAddress;
 
-        public EmailServices(string smtpServer, int port, string fromAddress, string fromPassword)
+        public EmailServices(GeneralServices generalServices)
         {
+            _generalServices = generalServices;
+
+            // Inicializar configuración SMTP
+            var dataEmailSetting = _generalServices.ObtenerData("uspObtenerDataEmailCSV", "")
+                .GetAwaiter()
+                .GetResult();
+
+            var settingParts = dataEmailSetting.Split('|');
+
+            if (settingParts.Length != 4)
+            {
+                throw new InvalidOperationException("La configuración del email no tiene el formato correcto");
+            }
+
+            string smtpServer = settingParts[0];
+            int port = Convert.ToInt32(settingParts[1]);
+            _fromAddress = settingParts[2];
+            string password = settingParts[3];
+
             _smtpClient = new SmtpClient(smtpServer, port)
             {
-                Credentials = new NetworkCredential(fromAddress, fromPassword),
+                Credentials = new NetworkCredential(_fromAddress, password),
                 EnableSsl = true
             };
-            _fromAddress = fromAddress;
         }
 
-        public async Task SendVerificationEmail(string toEmail, string Subject, string verificationCode)
+
+        public async Task SendVerificationEmail(string toEmail, string subject, string verificationCode)
         {
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(_fromAddress),
-                Subject = Subject, //"Verificación de correo electrónico",
-                //Body = $"<p>Gracias por registrarte. Tu código de verificación es: <strong>{verificationCode}</strong></p>",
+                Subject = subject, // asunto
                 Body = $"<p>Tu código de verificación es: <strong>{verificationCode}</strong></p>",
                 IsBodyHtml = true,
             };
@@ -42,12 +61,10 @@ namespace Biblioteca.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                // Manejo de errores
                 Console.WriteLine($"Error al enviar el correo: {ex.Message}");
-                throw; // Lanzar la excepción para manejarla en niveles superiores si es necesario
+                throw;
             }
         }
-
 
         public string GenerateVerificationCode()
         {
