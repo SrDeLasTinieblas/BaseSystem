@@ -17,7 +17,7 @@ namespace BaseSystem.Controllers
         }
 
         [HttpGet("Login")]
-        public async Task<IActionResult> Login(string data) // StevenLee89@live.com|PassTextPlain
+        public async Task<IActionResult> Login(string data) // StevenLee89@live.com|PassTextPlain|127.0.0.1
         {
             var response = await _usuarioServices.AuthenticateUsuario(data);
             if (response == null)

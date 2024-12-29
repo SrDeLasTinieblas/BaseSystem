@@ -36,7 +36,9 @@ namespace Biblioteca.Infrastructure.Services
             int port = Convert.ToInt32(settingParts[1]);
             _fromAddress = settingParts[2];
             string password = settingParts[3];
-            _bodyTemplate = settingParts[4];
+
+            string decodedTemplate = WebUtility.HtmlDecode(settingParts[4]);
+            _bodyTemplate = decodedTemplate;
 
             _smtpClient = new SmtpClient(smtpServer, port)
             {
@@ -54,7 +56,7 @@ namespace Biblioteca.Infrastructure.Services
             {
                 From = new MailAddress(_fromAddress),
                 Subject = asunto, // asunto
-                Body = finalBody, // $"<p>Tu código de verificación es: <strong>{verificationCode}</strong></p>",
+                Body = $"{finalBody}",
                 IsBodyHtml = true,
             };
             mailMessage.To.Add(toEmail);
