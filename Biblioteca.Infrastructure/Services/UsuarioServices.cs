@@ -1,11 +1,13 @@
 ﻿using BCrypt.Net;
 using Biblioteca.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,8 +37,9 @@ namespace Biblioteca.Infrastructure.Services
             if (string.IsNullOrEmpty(obtenerHash))
                 return "No obtuvo ningun dato de uspAutenticacionCsv.";
 
+
             string[] datos = data.Split("|"); // datos[0] JhonTheRipper@gmail.com datos[1] = PassTextPlain
-            data = datos[0] + '|' + obtenerHash;
+            data = datos[0] + '|' + obtenerHash + '|' + _GeneralServices.GetClientIP();
 
             var response = await _GeneralServices.ObtenerData("uspLoginCsv", data); // response = $2a$11$n9C1TzjBNcdd6ql57B3pq.2PQhOK3cYQQjRagVC7HZ5jMJSC5YDj2
 

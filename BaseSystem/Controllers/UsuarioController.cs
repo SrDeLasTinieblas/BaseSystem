@@ -35,10 +35,10 @@ namespace BaseSystem.Controllers
                 return Unauthorized("Usuario no encontrado"); // Usuario no encontrado 401
             }
 
-            if (tokenReal != "SuperAdmin" || tokenReal != "Administrador")
-            {
-                return Forbid("Acceso denegado"); // Acceso denegado 403
-            }
+            //if (tokenReal != "SuperAdmin" || tokenReal != "Administrador")
+            //{
+            //    return Forbid("Acceso denegado"); // Acceso denegado 403
+            //}
 
             var response = await _GeneralServices.ObtenerData("uspListarUsuarioCsv", "");
             if (response == null)

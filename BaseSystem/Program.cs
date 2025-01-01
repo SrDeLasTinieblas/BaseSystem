@@ -72,13 +72,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("RequireSuperAdminRole", policy => 
+    options.AddPolicy("RequireSuperAdminRole", policy =>
         policy.RequireRole("SuperAdmin", "Administrador"));
 
     options.AddPolicy("RequireAdministradorRole", policy => policy.RequireRole("Administrador"));
     options.AddPolicy("RequireProfesorRole", policy => policy.RequireRole("Profesor"));
     options.AddPolicy("RequireAlumnoRole", policy => policy.RequireRole("Alumno"));
-
 });
 
 // Configurar CORS
@@ -91,6 +90,8 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+
+builder.Services.AddHttpContextAccessor();
 
 // Servicios Personalizados (inyección de dependencias)
 builder.Services.AddScoped<GeneralServices>();

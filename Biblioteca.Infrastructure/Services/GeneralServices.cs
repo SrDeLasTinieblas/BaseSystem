@@ -4,16 +4,19 @@ using Microsoft.EntityFrameworkCore;
 
 using System.Text;
 using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Http;
 
 namespace Biblioteca.Infrastructure.Services
 {
     public class GeneralServices
     {
         private readonly AppDbContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public GeneralServices(AppDbContext context)
+        public GeneralServices(AppDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<string> ObtenerData(string nameProcedure, string dataParameter)
@@ -122,6 +125,13 @@ namespace Biblioteca.Infrastructure.Services
             return jsonArray;
         }
 
+        public string GetClientIP()
+        {
+            var ip = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+            var forwardedIp = _httpContextAccessor.HttpContext?.Request.Headers["X-Forwarded-For"].FirstOrDefault();
 
+            return forwardedIp ?? ip ?? "IP no disponible";
+        }
+    
     }
 }
