@@ -28,5 +28,30 @@ namespace BaseSystem.Controllers
             return Content(jsonString, "application/json");
 
         }
+        /*
+        [HttpPost("ConfirmarPago")]
+        public async Task<IActionResult> ConfirmarPago(string data)
+        {
+            // luego se llama a esta api para completar el pago
+            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var resultado = await _ImercadoLibreService.CrearPreferenciaPago(
+                request.Titulo,
+                request.Precio,
+                request.Email,
+                request.AlumnoId,
+                request.SelectedPackageId,
+                request.PaymentId,
+                token = "TEST-4688634476959666-093023-acd10d00061994ee3d4b2007de6f5c66-1207618741"
+                );
+
+            if (string.IsNullOrWhiteSpace(resultado))
+            {
+                return BadRequest("Error al crear la preferencia de pago.");
+            }
+            PaymentPreference paymentPreference = JsonConvert.DeserializeObject<PaymentPreference>(resultado);
+            return Ok(paymentPreference);
+        }
+        */
+
     }
 }
