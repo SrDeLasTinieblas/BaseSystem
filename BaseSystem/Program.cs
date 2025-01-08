@@ -98,6 +98,7 @@ builder.Services.AddScoped<GeneralServices>();
 builder.Services.AddScoped<UsuarioServices>();
 builder.Services.AddScoped<JWTServices>();
 builder.Services.AddScoped<EmailServices>();
+builder.Services.AddScoped<MercadoPagoServices>();
 
 var app = builder.Build();
 
