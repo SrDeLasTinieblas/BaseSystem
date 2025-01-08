@@ -18,7 +18,7 @@ namespace Biblioteca.Infrastructure.Services
             _GeneralServices = generalServices;
         }
 
-        public async Task<string> CreateCheckoutPreferenceAsync(string data)
+        public async Task<string> CreateCheckoutPreferenceAsync(string data) // idProducto|idUsuario
         {
             // Validar que se recibieron los datos necesarios
             if (string.IsNullOrEmpty(data))
@@ -26,74 +26,110 @@ namespace Biblioteca.Infrastructure.Services
 
             try
             {
-                // Extraer datos requeridos desde el string
-                string[] datos = data.Split('|');
-                if (datos.Length < 4)
-                    return "Formato de datos inválido. Asegúrate de incluir: title|quantity|unit_price|email.";
+                //[uspObtenerDataCheckoutCSV]
 
-                string title = datos[0];
-                int quantity = int.Parse(datos[1]);
-                decimal unitPrice = decimal.Parse(datos[2]);
-                string payerEmail = datos[3];
+                string[] datos = data.Split('|');
+                if (datos.Length < 2)
+                    return "Formato de datos inválido. Asegúrate de incluir: idProducto|idUsuario.";
+
+                var DataCheckout = await _GeneralServices.ObtenerData("uspObtenerDataCheckoutCSV", data); // DataCheckout = 120 soles - 4 clases|4|120.00|SamanthaSmith23@yahoo.com
+
+                string[] DatosCheckout = DataCheckout.Split('|');
+                //if (DataCheckout.Length < 4)
+                //    return "Formato de datos inválido. Asegúrate de incluir: title|quantity|unit_price|email en el retorno de uspObtenerDataCheckoutCSV.";
+
+                string autoReturn = DatosCheckout[0];
+                string back_urls_success = DatosCheckout[1];
+                string back_urls_failure = DatosCheckout[2];
+                string back_urls_pending = DatosCheckout[3];
+                string statementDescriptor = DatosCheckout[4];
+                string binaryMode = DatosCheckout[5];
+                string externalReference = DatosCheckout[6];
+                string ID = DatosCheckout[7];
+                string title = DatosCheckout[8];
+                int quantity = int.Parse(DatosCheckout[9]);
+                decimal unitPrice = decimal.Parse(DatosCheckout[10]);
+                string Descripcion = DatosCheckout[11];
+                string categoryId = DatosCheckout[12];
+
+                string payerEmail = DatosCheckout[13];
+                string playerName = DatosCheckout[14];
+                string playerSurname = DatosCheckout[15];
+                string player_area_code = DatosCheckout[16];
+                string playerPhone = DatosCheckout[17];
+
+                string identificationType = DatosCheckout[18];
+                string identificationNumber = DatosCheckout[19];
+                string address = DatosCheckout[20];
+                string playerPhoneStreet_name = DatosCheckout[21];
+                string playerPhoneStreet_number = DatosCheckout[22];
+                string playerPhoneZip_code = DatosCheckout[23];
+
+                int payment_methodsInstallments = int.Parse(DatosCheckout[24]);
+                string payment_methodsDefault_payment_method_id = DatosCheckout[25];
+                string notificationUrl = DatosCheckout[26];
+                string expires = DatosCheckout[27];
+                string expiration_date_from = DatosCheckout[28];
+                string expiration_date_to = DatosCheckout[29];
 
                 // Crear la carga útil (payload) para el request
                 var payload = new
                 {
-                    auto_return = "approved",
+                    auto_return = autoReturn, //"approved",
                     back_urls = new
                     {
-                        success = "http://httpbin.org/get?back_url=success",
-                        failure = "http://httpbin.org/get?back_url=failure",
-                        pending = "http://httpbin.org/get?back_url=pending"
+                        success = back_urls_success, //"http://httpbin.org/get?back_url=success",
+                        failure = back_urls_failure, //"http://httpbin.org/get?back_url=failure",
+                        pending = back_urls_pending, //"http://httpbin.org/get?back_url=pending"
                     },
-                    statement_descriptor = "TestStore",
-                    binary_mode = false,
-                    external_reference = "IWD1238971",
+                    statement_descriptor = statementDescriptor, //TestStore
+                    binary_mode = binaryMode, //false,
+                    external_reference = externalReference, //"IWD1238971",
                     items = new[]
                     {
-                new
-                {
-                    id = "010983098",
-                    title = title,
-                    quantity = quantity,
-                    unit_price = unitPrice,
-                    description = "Description of my product",
-                    category_id = "retail"
-                }
-            },
+                        new
+                        {
+                            id = ID, //"010983098",
+                            title = title,
+                            quantity = quantity,
+                            unit_price = unitPrice,
+                            description = Descripcion,
+                            category_id = categoryId, //"retail"
+                        }
+                    },
                     payer = new
                     {
                         email = payerEmail,
-                        name = "Juan",
-                        surname = "Lopez",
+                        name = playerName,
+                        surname = playerSurname,
                         phone = new
                         {
-                            area_code = "11",
-                            number = "1523164589"
+                            area_code = player_area_code,//11
+                            number = playerPhone //1523164589
                         },
                         identification = new
                         {
-                            type = "DNI",
-                            number = "12345678"
+                            type = identificationType, //"DNI",
+                            number = identificationNumber //"12345678"
                         },
                         address = new
                         {
-                            street_name = "Street",
-                            street_number = 123,
-                            zip_code = "1406"
+                            street_name = playerPhoneStreet_name, //"Street",
+                            street_number = playerPhoneStreet_number, //123,
+                            zip_code = playerPhoneZip_code //"1406"
                         }
                     },
                     payment_methods = new
                     {
                         excluded_payment_types = new object[] { },
                         excluded_payment_methods = new object[] { },
-                        installments = 12,
-                        default_payment_method_id = "account_money"
+                        installments = payment_methodsInstallments, //12,
+                        default_payment_method_id = payment_methodsDefault_payment_method_id, //"account_money"
                     },
-                    notification_url = "https://www.your-site.com/webhook",
-                    expires = true,
-                    expiration_date_from = "2024-01-01T12:00:00.000-04:00",
-                    expiration_date_to = "2025-12-31T12:00:00.000-04:00"
+                    notification_url = notificationUrl, //"https://www.your-site.com/webhook",
+                    expires = expires, //true,
+                    expiration_date_from = expiration_date_from, //"2024-01-01T12:00:00.000-04:00",
+                    expiration_date_to = expiration_date_to //"2025-12-31T12:00:00.000-04:00"
                 };
 
                 // Obtener el token de acceso
