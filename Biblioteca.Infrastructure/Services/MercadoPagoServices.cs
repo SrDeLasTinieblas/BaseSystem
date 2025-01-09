@@ -34,43 +34,71 @@ namespace Biblioteca.Infrastructure.Services
 
                 var DataCheckout = await _GeneralServices.ObtenerData("uspObtenerDataCheckoutCSV", data); // DataCheckout = 120 soles - 4 clases|4|120.00|SamanthaSmith23@yahoo.com
 
-                string[] DatosCheckout = DataCheckout.Split('|');
-                //if (DataCheckout.Length < 4)
-                //    return "Formato de datos inválido. Asegúrate de incluir: title|quantity|unit_price|email en el retorno de uspObtenerDataCheckoutCSV.";
+                var DataConfiguracion = DataCheckout.Split("¯")[0];
+                var DataProductos = DataCheckout.Split("¯")[1];
+                var DataUsuarios = DataCheckout.Split("¯")[2];
 
-                string autoReturn = DatosCheckout[0];
-                string back_urls_success = DatosCheckout[1];
-                string back_urls_failure = DatosCheckout[2];
-                string back_urls_pending = DatosCheckout[3];
-                string statementDescriptor = DatosCheckout[4];
-                string binaryMode = DatosCheckout[5];
-                string externalReference = DatosCheckout[6];
-                string ID = DatosCheckout[7];
-                string title = DatosCheckout[8];
-                int quantity = int.Parse(DatosCheckout[9]);
-                decimal unitPrice = decimal.Parse(DatosCheckout[10]);
-                string Descripcion = DatosCheckout[11];
-                string categoryId = DatosCheckout[12];
+                var Configuracion = DataConfiguracion.Split('¬');
+                // Configuracion
+                string autoReturn = Configuracion[0];
+                string back_urls_success = Configuracion[1];
+                string back_urls_failure = Configuracion[2];
+                string back_urls_pending = Configuracion[3];
+                string statementDescriptor = Configuracion[4];
+                bool binaryMode = Convert.ToBoolean(Configuracion[5]);
+                string externalReference = Configuracion[6];
 
-                string payerEmail = DatosCheckout[13];
-                string playerName = DatosCheckout[14];
-                string playerSurname = DatosCheckout[15];
-                string player_area_code = DatosCheckout[16];
-                string playerPhone = DatosCheckout[17];
+                var Productos = DataProductos.Split('¬');
+                var itemsList = new List<object>();
 
-                string identificationType = DatosCheckout[18];
-                string identificationNumber = DatosCheckout[19];
-                string address = DatosCheckout[20];
-                string playerPhoneStreet_name = DatosCheckout[21];
-                string playerPhoneStreet_number = DatosCheckout[22];
-                string playerPhoneZip_code = DatosCheckout[23];
+                // Iterar sobre cada producto
+                foreach (var producto in Productos)
+                {
+                    var columns = producto.Split('|');
 
-                int payment_methodsInstallments = int.Parse(DatosCheckout[24]);
-                string payment_methodsDefault_payment_method_id = DatosCheckout[25];
-                string notificationUrl = DatosCheckout[26];
-                string expires = DatosCheckout[27];
-                string expiration_date_from = DatosCheckout[28];
-                string expiration_date_to = DatosCheckout[29];
+                    if (columns.Length >= 6)
+                    {
+                        string ID = columns[0];
+                        string title = columns[1];
+                        int quantity = int.Parse(columns[2]);
+                        decimal unitPrice = decimal.Parse(columns[3]);
+                        string Descripcion = columns[4];
+                        string categoryId = columns[5];
+
+                        // Agregar el producto formateado a la lista
+                        itemsList.Add(new
+                        {
+                            id = ID,
+                            title = title,
+                            quantity = quantity,
+                            unit_price = unitPrice,
+                            description = Descripcion,
+                            category_id = categoryId
+                        });
+                    }
+                }
+                var items = itemsList.ToArray();
+
+                var Usuarios = DataUsuarios.Split('|');
+                // Usuario
+                string payerEmail = Usuarios[0];
+                string playerName = Usuarios[1];
+                string playerSurname = Usuarios[2];
+                string player_area_code = Usuarios[3];
+                string playerPhone = Usuarios[4];
+                string identificationType = Usuarios[5];
+                string identificationNumber = Usuarios[6];
+                string playerPhoneStreet_name = Usuarios[7];
+                string playerPhoneStreet_number = Usuarios[8];
+                string playerPhoneZip_code = Usuarios[9];
+
+                // Configuracion
+                int payment_methodsInstallments = int.Parse(Configuracion[7]);
+                string payment_methodsDefault_payment_method_id = Configuracion[8];
+                string notificationUrl = Configuracion[9];
+                bool expires = Convert.ToBoolean(Configuracion[10]);
+                string expiration_date_from = Configuracion[11];
+                string expiration_date_to = Configuracion[12];
 
                 // Crear la carga útil (payload) para el request
                 var payload = new
@@ -85,18 +113,7 @@ namespace Biblioteca.Infrastructure.Services
                     statement_descriptor = statementDescriptor, //TestStore
                     binary_mode = binaryMode, //false,
                     external_reference = externalReference, //"IWD1238971",
-                    items = new[]
-                    {
-                        new
-                        {
-                            id = ID, //"010983098",
-                            title = title,
-                            quantity = quantity,
-                            unit_price = unitPrice,
-                            description = Descripcion,
-                            category_id = categoryId, //"retail"
-                        }
-                    },
+                    items = items,
                     payer = new
                     {
                         email = payerEmail,
