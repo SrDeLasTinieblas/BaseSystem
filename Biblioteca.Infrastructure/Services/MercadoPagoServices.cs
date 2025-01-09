@@ -143,7 +143,7 @@ namespace Biblioteca.Infrastructure.Services
                         installments = payment_methodsInstallments, //12,
                         default_payment_method_id = payment_methodsDefault_payment_method_id, //"account_money"
                     },
-                    notification_url = "https://9d45-38-253-146-9.ngrok-free.app/api/Payments/webhook", // notificationUrl, //"https://www.your-site.com/webhook",
+                    notification_url = notificationUrl, //"https://www.your-site.com/webhook",
                     expires = expires, //true,
                     expiration_date_from = expiration_date_from, //"2024-01-01T12:00:00.000-04:00",
                     expiration_date_to = expiration_date_to //"2025-12-31T12:00:00.000-04:00"
