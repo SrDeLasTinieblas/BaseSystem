@@ -94,6 +94,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddHttpContextAccessor();
 
 // Servicios Personalizados (inyección de dependencias)
+builder.Services.AddHttpClient();
+
 builder.Services.AddScoped<GeneralServices>();
 builder.Services.AddScoped<UsuarioServices>();
 builder.Services.AddScoped<JWTServices>();

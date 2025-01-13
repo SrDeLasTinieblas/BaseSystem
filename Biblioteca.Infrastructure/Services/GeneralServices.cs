@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Net.Http;
 
 namespace Biblioteca.Infrastructure.Services
 {
@@ -12,11 +15,14 @@ namespace Biblioteca.Infrastructure.Services
     {
         private readonly AppDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly HttpClient _httpClient;
 
-        public GeneralServices(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+        public GeneralServices(AppDbContext context, IHttpContextAccessor httpContextAccessor, HttpClient httpClient)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
+            _httpClient = httpClient ?? new HttpClient();
+
         }
 
         public async Task<string> ObtenerData(string nameProcedure, string dataParameter)
@@ -132,6 +138,65 @@ namespace Biblioteca.Infrastructure.Services
 
             return forwardedIp ?? ip ?? "IP no disponible";
         }
-    
+
+
+
+
+        public async Task<T> GetAsync<T>(
+            string baseUrl,
+            string resourceId,
+            Dictionary<string, string> parameters = null,
+            string bearerToken = null)
+        {
+            try
+            {
+                // Construir la URL completa
+                var url = $"{baseUrl}/{resourceId}";
+
+                // Añadir parámetros de consulta si existen
+                if (parameters?.Count > 0)
+                {
+                    var queryString = string.Join("&", parameters.Select(kvp =>
+                        $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
+                    url = $"{url}?{queryString}";
+                }
+
+                using (var request = new HttpRequestMessage(HttpMethod.Get, url))
+                {
+                    // Configurar el token de autorización
+                    if (!string.IsNullOrWhiteSpace(bearerToken))
+                    {
+                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+                    }
+
+                    // Realizar la solicitud
+                    var response = await _httpClient.SendAsync(request);
+
+                    // Verificar la respuesta
+                    response.EnsureSuccessStatusCode();
+
+                    // Leer y deserializar la respuesta
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new HttpRequestException($"Error en la solicitud HTTP: {ex.Message}", ex);
+            }
+            catch (JsonException ex)
+            {
+                throw new JsonException($"Error al deserializar la respuesta: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error inesperado durante la solicitud GET: {ex.Message}", ex);
+            }
+        }
+
+
     }
 }

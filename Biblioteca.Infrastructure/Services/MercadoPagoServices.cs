@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,8 +27,6 @@ namespace Biblioteca.Infrastructure.Services
 
             try
             {
-                //[uspObtenerDataCheckoutCSV]
-
                 string[] datos = data.Split('|');
                 if (datos.Length < 2)
                     return "Formato de datos inválido. Asegúrate de incluir: idProducto|idUsuario.";
@@ -186,6 +185,55 @@ namespace Biblioteca.Infrastructure.Services
 
 
 
+        //public async Task ProcessWebhookNotification(string rawData)
+        //{
+        //    try
+        //    {
+        //        string jsonData = JsonConvert.SerializeObject(rawData);
+        //        var parameters = new DynamicParameters();
+
+        //        // Intentar deserializar como notificación base
+        //        var baseNotification = JsonConvert.DeserializeObject<MercadoPagoNotificationBase>(jsonData);
+
+        //        if (baseNotification?.Topic == "payment")
+        //        {
+        //            // Si es una notificación de pago, intentar deserializar como PaymentNotification
+        //            var paymentNotification = JsonConvert.DeserializeObject<MercadoPagoPaymentNotification>(jsonData);
+        //            if (paymentNotification != null)
+        //            {
+        //                parameters.Add("@ResourceId", paymentNotification.Data?.Id);
+        //                parameters.Add("@Topic", "payment");
+        //                parameters.Add("@Action", paymentNotification.Action);
+        //                parameters.Add("@ApiVersion", paymentNotification.ApiVersion);
+        //                parameters.Add("@PaymentId", paymentNotification.Data?.Id);
+        //                parameters.Add("@DateCreated", paymentNotification.DateCreated);
+        //                parameters.Add("@NotificationId_MP", paymentNotification.Id);
+        //                parameters.Add("@LiveMode", paymentNotification.LiveMode);
+        //                parameters.Add("@Type", paymentNotification.Type);
+        //                parameters.Add("@UserId", paymentNotification.UserId);
+        //            }
+        //        }
+        //        else if (baseNotification?.Topic == "merchant_order")
+        //        {
+        //            parameters.Add("@ResourceUrl", baseNotification.Resource);
+        //            parameters.Add("@Topic", "merchant_order");
+
+        //            // Extraer el ID del merchant_order de la URL
+        //            var merchantOrderId = baseNotification.Resource.Split('/').LastOrDefault();
+        //            parameters.Add("@ResourceId", merchantOrderId);
+        //        }
+
+        //        parameters.Add("@RawData", jsonData);
+
+        //        // Guardar en la base de datos
+        //        await _db.ExecuteAsync("uspInsertMPNotification", parameters, commandType: CommandType.StoredProcedure);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error processing MercadoPago webhook notification");
+        //        throw;
+        //    }
+        //}
 
     }
 }
