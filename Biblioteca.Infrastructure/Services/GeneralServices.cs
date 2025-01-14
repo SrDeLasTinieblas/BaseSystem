@@ -141,8 +141,7 @@ namespace Biblioteca.Infrastructure.Services
 
 
 
-
-        public async Task<T> GetAsync<T>(
+        public async Task<string> GetAsync(
             string baseUrl,
             string resourceId,
             Dictionary<string, string> parameters = null,
@@ -175,27 +174,23 @@ namespace Biblioteca.Infrastructure.Services
                     // Verificar la respuesta
                     response.EnsureSuccessStatusCode();
 
-                    // Leer y deserializar la respuesta
+                    // Leer la respuesta como string
                     var content = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
+
+                    // Retornar la respuesta como string
+                    return content;
                 }
             }
             catch (HttpRequestException ex)
             {
                 throw new HttpRequestException($"Error en la solicitud HTTP: {ex.Message}", ex);
             }
-            catch (JsonException ex)
-            {
-                throw new JsonException($"Error al deserializar la respuesta: {ex.Message}", ex);
-            }
             catch (Exception ex)
             {
                 throw new Exception($"Error inesperado durante la solicitud GET: {ex.Message}", ex);
             }
         }
+
 
 
     }
