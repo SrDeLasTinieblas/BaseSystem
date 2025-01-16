@@ -1,12 +1,14 @@
 ﻿using Biblioteca.Domain.Entities;
 using Biblioteca.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Globalization;
 using System.Text.Json;
+using JsonException = Newtonsoft.Json.JsonException;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace BaseSystem.Controllers
@@ -18,8 +20,8 @@ namespace BaseSystem.Controllers
         private readonly MercadoPagoServices _mercadoPagoServices;
         private readonly GeneralServices _generalServices;
         private readonly ILogger<PaymentsController> _logger;
-        //private const string MERCADOPAGO_API_URL = "https://api.mercadopago.com/v1/payments";
-        private const string MERCADOPAGO_API_URL = "https://api.mercadolibre.com/merchant_orders";
+        private const string MERCADOPAGO_API_URL_payments = "https://api.mercadopago.com/v1/payments";
+        private const string MERCADOPAGO_API_URL_merchant_orders = "https://api.mercadolibre.com/merchant_orders";
 
         public PaymentsController(GeneralServices generalServices, MercadoPagoServices mercadoPagoServices, ILogger<PaymentsController> logger)
         {
@@ -43,7 +45,7 @@ namespace BaseSystem.Controllers
                 _logger.LogInformation("Webhook recibido de MercadoPago: {Data}", payload);
 
                 // Validar el payload
-                if (!IsValidPayload(payload, out string topic, out string resource))
+                if (!_mercadoPagoServices.IsValidPayload(payload, out string topic, out string resource))
                 {
                     _logger.LogWarning("Payload inválido recibido: {Payload}", payload);
                     return BadRequest("Payload inválido");
@@ -52,71 +54,166 @@ namespace BaseSystem.Controllers
                 _logger.LogInformation("Tema del webhook: {Topic}, recurso: {Resource}", topic, resource);
 
                 // Extraer el ID del pago
-                string orderId = ExtractPaymentId(resource);
+                string MerchantOrdersID = _mercadoPagoServices.ExtractPaymentId(resource);
+
+                _logger.LogInformation("Extracción del ID del pago: {OrderId}", MerchantOrdersID);
 
                 string accessToken = await _generalServices.ObtenerData("uspACCESS_TOKENCsv", "");
 
-                // Realizar la solicitud a la API de MercadoPago
-                var jsonResponse = await _generalServices.GetAsync(
-                    MERCADOPAGO_API_URL,
-                    orderId,
+                // Verificar el token de acceso
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    _logger.LogError("El AccessToken es nulo o vacío.");
+                    return StatusCode(500, "Token de acceso no válido");
+                }
+
+                _logger.LogInformation("Access Token obtenido: {AccessToken}", accessToken);
+
+                var merchant_ordersJsonResponse = await _generalServices.GetAsync(
+                    MERCADOPAGO_API_URL_merchant_orders,
+                    MerchantOrdersID,
                     bearerToken: accessToken);
 
-                var jsonDoc = JsonDocument.Parse(jsonResponse);
-                var root = jsonDoc.RootElement;
+                _logger.LogInformation("Respuesta de la API de 'merchant_orders': {Response}", merchant_ordersJsonResponse);
 
-                var transactionId = root.GetProperty("id").GetInt64();
-                var externalReference = root.GetProperty("external_reference").GetString();
-                var status = root.GetProperty("status").GetString();
-                var statusDetail = root.GetProperty("payments").EnumerateArray().FirstOrDefault().GetProperty("status_detail").GetString();
-                var totalAmount = root.GetProperty("total_amount").GetDecimal();
-                var currencyId = root.GetProperty("payments").EnumerateArray().FirstOrDefault().GetProperty("currency_id").GetString();
-                var userId = root.GetProperty("collector").GetProperty("id").GetInt64();
-                var paymentId = root.GetProperty("payments").EnumerateArray().FirstOrDefault().GetProperty("id").GetInt64();
-                var preferenceId = root.GetProperty("preference_id").GetString();
-                var dateApproved = root.GetProperty("payments").EnumerateArray().FirstOrDefault().GetProperty("date_approved").GetDateTime();
-                var dateCreatedStr = root.GetProperty("date_created").GetString();
-                var dateUpdatedStr = root.GetProperty("last_updated").GetString();
+                JsonDocument jsonDoc = null;
+                try
+                {
+                    jsonDoc = JsonDocument.Parse(merchant_ordersJsonResponse);
+                }
+                catch (JsonException jsonEx)
+                {
+                    _logger.LogError(jsonEx, "Error al parsear la respuesta JSON de 'merchant_orders'");
+                    return StatusCode(500, "Error al procesar la respuesta de 'merchant_orders'");
+                }
 
-                var dateCreated = DateTimeOffset.Parse(dateCreatedStr, null, System.Globalization.DateTimeStyles.AssumeUniversal).DateTime;
-                var dateUpdated = DateTimeOffset.Parse(dateUpdatedStr, null, System.Globalization.DateTimeStyles.AssumeUniversal).DateTime;
+                var rootOrder = jsonDoc.RootElement;
 
-                var data = "" + transactionId + '¯' + externalReference + '¯' + status + '¯' + statusDetail + '¯' + 
-                    totalAmount + '¯' + currencyId + '¯' + userId + '¯' + paymentId + '¯' + preferenceId + '¯' + 
-                    dateApproved + '¯' +  dateCreated + '¯' + dateUpdated+ '¯' + root;
+                // Orden
+                long ordenId = rootOrder.GetProperty("id").GetInt64();
+                string externalReference = rootOrder.GetProperty("external_reference").GetString();
+                string orderStatus = rootOrder.GetProperty("status").GetString();
+                string orderPaidStatus = rootOrder.GetProperty("order_status").GetString();
+                decimal totalAmount = rootOrder.GetProperty("total_amount").GetDecimal();
+                decimal paidAmount = rootOrder.GetProperty("paid_amount").GetDecimal();
+                decimal refundedAmount = rootOrder.GetProperty("refunded_amount").GetDecimal();
+                string dateCreated = rootOrder.GetProperty("date_created").GetString();
+                string lastUpdated = rootOrder.GetProperty("last_updated").GetString();
+                string notificationUrl = rootOrder.GetProperty("notification_url").GetString();
 
-                _logger.LogInformation("{data}", data);
+                // Pagos asociados
+                var payment = rootOrder.GetProperty("payments")[0];
+                long paymentId = payment.GetProperty("id").GetInt64();
+                decimal transactionAmount = payment.GetProperty("transaction_amount").GetDecimal();
+                string paymentStatus = payment.GetProperty("status").GetString();
+                string currencyId = payment.GetProperty("currency_id").GetString();
+                string dateApproved = payment.GetProperty("date_approved").GetString();
 
-                await _generalServices.ObtenerData("uspInsertarTransaccionesCsv", data);
+                // Pagador
+                long payerId = rootOrder.GetProperty("payer").GetProperty("id").GetInt64();
+
+                // Artículos comprados
+                var items = rootOrder.GetProperty("items");
+                List<string> ids = new List<string>();
+
+                foreach (var item in items.EnumerateArray())
+                {
+                    string IdProducto = item.GetProperty("id").GetString();
+                    ids.Add(IdProducto);
+                }
+                string concatenatedIds = string.Join(",", ids);
+
+                // Realizar la solicitud a la API de MercadoPago
+                var paymentsJsonResponse = await _generalServices.GetAsync(
+                    MERCADOPAGO_API_URL_payments,
+                    paymentId.ToString(),
+                    bearerToken: accessToken);
+
+                _logger.LogInformation("Respuesta de la API de 'payments': {Response}", paymentsJsonResponse);
+
+                JsonDocument jsonDocPayments = null;
+                try
+                {
+                    jsonDocPayments = JsonDocument.Parse(paymentsJsonResponse);
+                }
+                catch (JsonException jsonEx)
+                {
+                    _logger.LogError(jsonEx, "Error al parsear la respuesta JSON de 'payments'");
+                    return StatusCode(500, "Error al procesar la respuesta de 'payments'");
+                }
+
+                var rootPayments = jsonDocPayments.RootElement;
+                _logger.LogInformation("Respuesta de 'payments' parseada: {RootPayments}", rootPayments);
+
+                // Información de la transacción
+                long transactionId = rootPayments.GetProperty("id").GetInt64();
+                string status = rootPayments.GetProperty("status").GetString();
+                string statusDetail = rootPayments.GetProperty("status_detail").GetString();
+                int installments = rootPayments.GetProperty("installments").GetInt32();
+                string operationType = rootPayments.GetProperty("operation_type").GetString();
+                string paymentMethodId = rootPayments.GetProperty("payment_method_id").GetString();
+                string paymentTypeId = rootPayments.GetProperty("payment_type_id").GetString();
+                string statementDescriptor = rootPayments.GetProperty("statement_descriptor").GetString();
+
+                // Tarjeta
+                var card = rootPayments.GetProperty("card");
+                var firstSixDigits = card.GetProperty("first_six_digits").GetString();
+                var lastFourDigits = card.GetProperty("last_four_digits").GetString();
+                var expirationMonth = card.GetProperty("expiration_month").GetInt32();
+                var expirationYear = card.GetProperty("expiration_year").GetInt32();
+                var cardholder = card.GetProperty("cardholder");
+                var cardholderName = cardholder.GetProperty("name").GetString();
+                var cardholderIdentification = cardholder.GetProperty("identification");
+                var cardholderIdNumber = cardholderIdentification.GetProperty("number").GetString();
+                var cardholderIdType = cardholderIdentification.GetProperty("type").GetString();
+
+                // Pagador
+                var payer = rootPayments.GetProperty("payer");
+                var payerEmail = payer.GetProperty("email").GetString();
+
+                string payerStreetName = null;
+                string payerStreetNumber = null;
+                string payerZipCode = null;
+
+                if (payer.TryGetProperty("address", out JsonElement payerAddress))
+                {
+                    payerStreetName = payerAddress.TryGetProperty("street_name", out JsonElement streetName) ? streetName.GetString() : null;
+                    payerStreetNumber = payerAddress.TryGetProperty("street_number", out JsonElement streetNumber) ? streetNumber.GetString() : null;
+                    payerZipCode = payerAddress.TryGetProperty("zip_code", out JsonElement zipCode) ? zipCode.GetString() : null;
+                }
+                var payerPhone = payer.GetProperty("phone");
+                var payerPhoneNumber = payerPhone.GetProperty("number").GetString();
+                var payerFirstName = payer.GetProperty("first_name").GetString();
+                var payerLastName = payer.GetProperty("last_name").GetString();
+
+                // Detalles de comisión
+                var feeDetails = rootPayments.GetProperty("fee_details")[0];
+                var feeAmount = feeDetails.GetProperty("amount").GetDecimal();
+                var feeType = feeDetails.GetProperty("type").GetString();
+
+                var data = "" + ordenId + '¯' + externalReference + '¯' + orderStatus + '¯' +
+                    orderPaidStatus + '¯' + totalAmount + '¯' + paidAmount + '¯' + refundedAmount + '¯' +
+                    currencyId + '¯' + dateCreated + '¯' + lastUpdated + '¯' + notificationUrl + '¯' +
+                    paymentId + '¯' + transactionAmount + '¯' + paymentStatus + '¯' + dateApproved + '¯' +
+                    payerId + '¯' + concatenatedIds /*+ '¯' + transactionId +*/ + '¯' + status + '¯' +
+                    statusDetail + '¯' + installments + '¯' + operationType + '¯' + paymentMethodId + '¯' +
+                    paymentTypeId + '¯' + statementDescriptor + '¯' + firstSixDigits + '¯' + lastFourDigits + '¯' +
+                    expirationMonth + '¯' + expirationYear + '¯' + cardholderName + '¯' + cardholderIdNumber + '¯' +
+                    cardholderIdType + '¯' + payerEmail + '¯' + payerStreetName + '¯' + payerStreetNumber + '¯' +
+                    payerZipCode + '¯' + payerPhoneNumber + '¯' + payerFirstName + '¯' + payerLastName + '¯' +
+                    feeAmount + '¯' + feeType;
+
+                _logger.LogInformation("Datos procesados: {Data}", data);
+
+                //await _generalServices.ObtenerData("uspInsertarTransaccionesCsv", data);
 
                 return Ok(new { message = "Webhook procesado exitosamente" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al procesar el webhook");
+                _logger.LogError(ex, "Error al procesar el webhook: {Message}", ex.Message);
                 return StatusCode(500, "Error interno al procesar el webhook");
             }
-        }
-
-        private bool IsValidPayload(JsonElement payload, out string topic, out string resource)
-        {
-            topic = null;
-            resource = null;
-
-            if (!payload.TryGetProperty("topic", out JsonElement topicElement) ||
-                !payload.TryGetProperty("resource", out JsonElement resourceElement))
-            {
-                return false;
-            }
-
-            topic = topicElement.GetString();
-            resource = resourceElement.GetString();
-            return !string.IsNullOrEmpty(topic) && !string.IsNullOrEmpty(resource);
-        }
-
-        private string ExtractPaymentId(string resource)
-        {
-            return resource.Split('/').Last();
         }
 
 
