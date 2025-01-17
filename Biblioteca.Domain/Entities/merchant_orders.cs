@@ -6,34 +6,7 @@ using System.Threading.Tasks;
 
 namespace Biblioteca.Domain.Entities
 {
-    public class MercadoPagoNotification
-    {
-        public long Id { get; set; }
-        public string Status { get; set; }
-        public string ExternalReference { get; set; }
-        public string PreferenceId { get; set; }
-        public List<Payment> Payments { get; set; }
-        public List<object> Shipments { get; set; } // En el ejemplo no se muestra información sobre "shipments"
-        public List<object> Payouts { get; set; } // En el ejemplo no se muestra información sobre "payouts"
-        public Collector Collector { get; set; }
-        public string Marketplace { get; set; }
-        public string NotificationUrl { get; set; }
-        public DateTime DateCreated { get; set; }
-        public DateTime LastUpdated { get; set; }
-        public string SponsorId { get; set; }
-        public decimal ShippingCost { get; set; }
-        public decimal TotalAmount { get; set; }
-        public decimal PaidAmount { get; set; }
-        public decimal RefundedAmount { get; set; }
-        public Payer Payer { get; set; }
-        public List<Item> Items { get; set; }
-        public bool Cancelled { get; set; }
-        public string AdditionalInfo { get; set; }
-        public bool IsTest { get; set; }
-        public string OrderStatus { get; set; }
-    }
-
-    public class Payment
+    public class merchant_orders
     {
         public long Id { get; set; }
         public decimal TransactionAmount { get; set; }
@@ -74,5 +47,31 @@ namespace Biblioteca.Domain.Entities
         public decimal UnitPrice { get; set; }
     }
 
-
+    public class MerchantOrder
+    {
+        public long Id { get; set; }
+        public string Status { get; set; }
+        public string ExternalReference { get; set; }
+        public string PreferenceId { get; set; }
+        public List<merchant_orders> Payments { get; set; }
+        public List<object> Shipments { get; set; } // Empty list in JSON, could be an object or list
+        public List<object> Payouts { get; set; } // Empty list in JSON, could be an object or list
+        public Collector Collector { get; set; }
+        public string Marketplace { get; set; }
+        public string NotificationUrl { get; set; }
+        public DateTime DateCreated { get; set; }
+        public DateTime LastUpdated { get; set; }
+        public object SponsorId { get; set; } // Null in JSON
+        public decimal ShippingCost { get; set; }
+        public decimal TotalAmount { get; set; }
+        public decimal PaidAmount { get; set; }
+        public decimal RefundedAmount { get; set; }
+        public Payer Payer { get; set; }
+        public List<Item> Items { get; set; }
+        public bool Cancelled { get; set; }
+        public string AdditionalInfo { get; set; }
+        public object ApplicationId { get; set; } // Null in JSON
+        public bool IsTest { get; set; }
+        public string OrderStatus { get; set; }
+    }
 }

@@ -150,7 +150,7 @@ namespace Biblioteca.Infrastructure.Services
             try
             {
                 // Construir la URL completa
-                var url = $"{baseUrl}/{resourceId}";
+                var url = $"{baseUrl}{resourceId}";
 
                 // Añadir parámetros de consulta si existen
                 if (parameters?.Count > 0)
