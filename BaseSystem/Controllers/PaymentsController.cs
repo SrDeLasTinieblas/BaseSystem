@@ -159,8 +159,24 @@ namespace BaseSystem.Controllers
                 var card = rootPayments.GetProperty("card");
                 var firstSixDigits = card.GetProperty("first_six_digits").GetString();
                 var lastFourDigits = card.GetProperty("last_four_digits").GetString();
-                var expirationMonth = card.GetProperty("expiration_month").GetInt32();
-                var expirationYear = card.GetProperty("expiration_year").GetInt32();
+                var expirationMonth = 0; // card.GetProperty("expiration_month").GetInt32();
+                if (card.TryGetProperty("expiration_month", out JsonElement expirationMonthElement))
+                {
+                    if (expirationMonthElement.ValueKind == JsonValueKind.Number)
+                    {
+                        expirationMonth = expirationMonthElement.GetInt32();
+                    }
+                }
+
+                var expirationYear = 0; // card.GetProperty("expiration_year").GetInt32();
+                if (card.TryGetProperty("expiration_year", out JsonElement expirationYearElement))
+                {
+                    if (expirationYearElement.ValueKind == JsonValueKind.Number)
+                    {
+                        expirationYear = expirationYearElement.GetInt32();
+                    }
+                }
+
                 var cardholder = card.GetProperty("cardholder");
                 var cardholderName = cardholder.GetProperty("name").GetString();
                 var cardholderIdentification = cardholder.GetProperty("identification");
@@ -187,15 +203,24 @@ namespace BaseSystem.Controllers
                 var payerLastName = payer.GetProperty("last_name").GetString();
 
                 // Detalles de comisión
-                var feeDetails = rootPayments.GetProperty("fee_details")[0];
-                var feeAmount = feeDetails.GetProperty("amount").GetDecimal();
-                var feeType = feeDetails.GetProperty("type").GetString();
+                var feeAmount = 0.0;
+                var feeType = "";
+
+                if (rootPayments.TryGetProperty("fee_details", out JsonElement feeDetailsElement))
+                {
+                    if (feeDetailsElement.ValueKind == JsonValueKind.Array && feeDetailsElement.GetArrayLength() > 0)
+                    {
+                        var feeDetails = feeDetailsElement[0];
+                        feeAmount = (double) feeDetails.GetProperty("amount").GetDecimal();
+                        feeType = feeDetails.GetProperty("type").GetString();
+                    }
+                }
 
                 var data = "" + ordenId + '¯' + externalReference + '¯' + orderStatus + '¯' +
                     orderPaidStatus + '¯' + totalAmount + '¯' + paidAmount + '¯' + refundedAmount + '¯' +
                     currencyId + '¯' + dateCreated + '¯' + lastUpdated + '¯' + notificationUrl + '¯' +
                     paymentId + '¯' + transactionAmount + '¯' + paymentStatus + '¯' + dateApproved + '¯' +
-                    payerId + '¯' + concatenatedIds /*+ '¯' + transactionId +*/ + '¯' + status + '¯' +
+                    payerId + '¯' + concatenatedIds + '¯' + status + '¯' +
                     statusDetail + '¯' + installments + '¯' + operationType + '¯' + paymentMethodId + '¯' +
                     paymentTypeId + '¯' + statementDescriptor + '¯' + firstSixDigits + '¯' + lastFourDigits + '¯' +
                     expirationMonth + '¯' + expirationYear + '¯' + cardholderName + '¯' + cardholderIdNumber + '¯' +
@@ -205,7 +230,7 @@ namespace BaseSystem.Controllers
 
                 _logger.LogInformation("Datos procesados: {Data}", data);
 
-                //await _generalServices.ObtenerData("uspInsertarTransaccionesCsv", data);
+                await _generalServices.ObtenerData("uspInsertarTransaccionesCsv", data);
 
                 return Ok(new { message = "Webhook procesado exitosamente" });
             }
