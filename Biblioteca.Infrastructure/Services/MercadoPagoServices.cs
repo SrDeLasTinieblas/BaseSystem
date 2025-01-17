@@ -222,10 +222,12 @@ namespace Biblioteca.Infrastructure.Services
 
                 if (mensaje.Split('|')[0] == "A")
                 {
+                    _logger.LogInformation("successful: ", mensaje.Split('|')[1]);
                     return (true, mensaje.Split('|')[1]);
                 }
                 else
                 {
+                    _logger.LogInformation("oh no :( : ", mensaje.Split('|')[1]);
                     return (false, mensaje.Split('|')[1]);
                 }
             }
@@ -315,7 +317,15 @@ namespace Biblioteca.Infrastructure.Services
                 expirationMonth = card.TryGetProperty("expiration_month", out var cardExpirationMonth)
                     ? (cardExpirationMonth.ValueKind != JsonValueKind.Null ? cardExpirationMonth.GetInt32() : 0)
                     : 0;
-                expirationYear = card.TryGetProperty("expiration_year", out var cardExpirationYear) ? cardExpirationYear.GetInt32() : 0;
+
+                //expirationYear = card.TryGetProperty("expiration_year", out var cardExpirationYear)
+                //    ? cardExpirationYear.GetInt32()
+                //    : 0;
+
+                expirationYear = card.TryGetProperty("expiration_year", out var cardExpirationYear)
+                ? (cardExpirationYear.ValueKind != JsonValueKind.Null ? cardExpirationYear.GetInt32() : 0)
+                    : 0;
+
 
                 if (card.TryGetProperty("cardholder", out JsonElement cardholder))
                 {
