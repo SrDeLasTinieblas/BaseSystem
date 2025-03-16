@@ -18,13 +18,17 @@ namespace Biblioteca.Infrastructure.Services
         private readonly GeneralServices _GeneralServices;
         private readonly ILogger<MercadoPagoServices> _logger;
 
+        private const string MERCADOPAGO_API_URL_payments = "https://api.mercadopago.com/v1/payments";
+        private const string MERCADOPAGO_API_URL_merchant_orders = "https://api.mercadolibre.com/merchant_orders";
+
+
         public MercadoPagoServices(GeneralServices generalServices, ILogger<MercadoPagoServices> logger)
         {
             _GeneralServices = generalServices;
             _logger = logger;
         }
 
-        public async Task<string> CreateCheckoutPreferenceAsync(string data) // idProducto|idUsuario
+        public async Task<string> CreateCheckoutPreferenceAsync(string data) // idUsuario|idProducto
         {
             // Validar que se recibieron los datos necesarios
             if (string.IsNullOrEmpty(data))
@@ -202,7 +206,7 @@ namespace Biblioteca.Infrastructure.Services
 
                 // Obtener detalles del pedido
                 var merchantOrdersString = await _GeneralServices.GetAsync(
-                    "https://api.mercadopago.com/merchant_orders/",
+                    MERCADOPAGO_API_URL_merchant_orders,
                     MerchantOrdersID,
                     bearerToken: accessToken);
 
@@ -210,7 +214,7 @@ namespace Biblioteca.Infrastructure.Services
 
                 // Obtener detalles del pago
                 var paymentsString = await _GeneralServices.GetAsync(
-                    "https://api.mercadopago.com/v1/payments/",
+                    MERCADOPAGO_API_URL_payments,
                     merchantOrderDetails.Split('¯')[11],
                     bearerToken: accessToken);
 

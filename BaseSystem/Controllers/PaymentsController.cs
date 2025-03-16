@@ -20,9 +20,6 @@ namespace BaseSystem.Controllers
         private readonly MercadoPagoServices _mercadoPagoServices;
         private readonly GeneralServices _generalServices;
         private readonly ILogger<PaymentsController> _logger;
-        private const string MERCADOPAGO_API_URL_payments = "https://api.mercadopago.com/v1/payments";
-        private const string MERCADOPAGO_API_URL_merchant_orders = "https://api.mercadolibre.com/merchant_orders";
-
         public PaymentsController(GeneralServices generalServices, MercadoPagoServices mercadoPagoServices, ILogger<PaymentsController> logger)
         {
             _mercadoPagoServices = mercadoPagoServices;
@@ -54,15 +51,18 @@ namespace BaseSystem.Controllers
                 _logger.LogInformation("Tema del webhook: {Topic}, recurso: {Resource}", topic, resource);
 
                 // Procesar la transacción
-                var result = await _mercadoPagoServices.ProcessTransaction(resource);
+                var (Success, ErrorMessage) = await _mercadoPagoServices.ProcessTransaction(resource);
 
-                if (!result.Success)
+                if (Success)
                 {
-                    _logger.LogError("Error al procesar la transacción: {Error}", result.ErrorMessage);
-                    return StatusCode(500, result.ErrorMessage);
+                    _logger.LogInformation("Transacción procesada exitosamente");
+                    return Ok(new { message = "Webhook procesado exitosamente" });
                 }
-
-                return Ok(new { message = "Webhook procesado exitosamente" });
+                else
+                {
+                    _logger.LogError("Error al procesar la transacción: {Error}", ErrorMessage);
+                    return StatusCode(500, ErrorMessage);
+                }
             }
             catch (Exception ex)
             {
