@@ -18,8 +18,8 @@ namespace Biblioteca.Infrastructure.Services
         private readonly GeneralServices _GeneralServices;
         private readonly ILogger<MercadoPagoServices> _logger;
 
-        private const string MERCADOPAGO_API_URL_payments = "https://api.mercadopago.com/v1/payments";
-        private const string MERCADOPAGO_API_URL_merchant_orders = "https://api.mercadolibre.com/merchant_orders";
+        private const string MERCADOPAGO_API_URL_payments = "https://api.mercadopago.com/v1/payments/";
+        private const string MERCADOPAGO_API_URL_merchant_orders = "https://api.mercadolibre.com/merchant_orders/";
 
 
         public MercadoPagoServices(GeneralServices generalServices, ILogger<MercadoPagoServices> logger)
