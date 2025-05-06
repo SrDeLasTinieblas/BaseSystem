@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -38,9 +39,9 @@ namespace Biblioteca.Infrastructure.Services
             {
                 string[] datos = data.Split('|');
                 if (datos.Length < 2)
-                    return "Formato de datos inválido. Asegúrate de incluir: idProducto|idUsuario.";
+                    return "Formato de datos inválido. Asegúrate de incluir: idUsuario|idProducto.";
 
-                var DataCheckout = await _GeneralServices.ObtenerData("uspObtenerDataCheckoutCSV", data); // DataCheckout = 120 soles - 4 clases|4|120.00|SamanthaSmith23@yahoo.com
+                var DataCheckout = await _GeneralServices.ObtenerData("uspObtenerDataCheckoutCSV", data); // DataCheckout = approved¬https://hnsebciei.netlify.app¬https://hnsebciei.netlify.app¬https://hnsebciei.netlify.app¬Investigacion Asesoria¬false¬IWD1238971¬12¬account_money¬https://sergiobernales.somee.com/api/Payments/webhook¬true¬2024-01-01T12:00:00.000-04:00¬2025-12-31T12:00:00.000-04:00¯1|Formulario de Solicitud Institucional|1|100.00|Formulario para gestionar solicitudes de revisión de proyectos y enmiendas|Formularios¯1|test_user_12398378192@testuser.com|Juan|Lopez|51|980855886|DNI|74286594|Street|123|1406
 
                 var DataConfiguracion = DataCheckout.Split("¯")[0];
                 var DataProductos = DataCheckout.Split("¯")[1];
@@ -89,24 +90,34 @@ namespace Biblioteca.Infrastructure.Services
 
                 var Usuarios = DataUsuarios.Split('|');
                 // Usuario
-                string payerEmail = Usuarios[0];
-                string playerName = Usuarios[1];
-                string playerSurname = Usuarios[2];
-                string player_area_code = Usuarios[3];
-                string playerPhone = Usuarios[4];
-                string identificationType = Usuarios[5];
-                string identificationNumber = Usuarios[6];
-                string playerPhoneStreet_name = Usuarios[7];
-                string playerPhoneStreet_number = Usuarios[8];
-                string playerPhoneZip_code = Usuarios[9];
+                string payerEmail = Usuarios[0]; // required
+                string playerName = Usuarios[1]; // required
+                string playerSurname = Usuarios[2]; // required
+                string player_area_code = Usuarios[3]; // Datos no obligatorios
+                string playerPhone = Usuarios[4]; // required
+                string identificationType = Usuarios[5]; // Datos no obligatorios
+                string identificationNumber = Usuarios[6]; // Datos no obligatorios
+                string playerPhoneStreet_name = Usuarios[7]; // default
+                string playerPhoneStreet_number = Usuarios[8]; // default
+                string playerPhoneZip_code = Usuarios[9]; // default
 
                 // Configuracion
                 int payment_methodsInstallments = int.Parse(Configuracion[7]);
-                string payment_methodsDefault_payment_method_id = Configuracion[8];
+                string? payment_methodsDefault_payment_method_id = Configuracion[8] == "null" ? null : Configuracion[8];
                 string notificationUrl = Configuracion[9];
                 bool expires = Convert.ToBoolean(Configuracion[10]);
                 string expiration_date_from = Configuracion[11];
                 string expiration_date_to = Configuracion[12];
+
+                // Configuración de métodos de pago excluidos
+                object[]? excludedPaymentTypes = Configuracion[13] == "null"
+                    ? null
+                    : Configuracion[13].Split(',').Select(x => new { id = x.Trim() }).ToArray<object>();
+
+                object[]? excludedPaymentMethods = Configuracion[14] == "null"
+                    ? null
+                    : Configuracion[14].Split(',').Select(x => new { id = x.Trim() }).ToArray<object>();
+
 
                 // Crear la carga útil (payload) para el request
                 var payload = new
@@ -146,10 +157,10 @@ namespace Biblioteca.Infrastructure.Services
                     },
                     payment_methods = new
                     {
-                        excluded_payment_types = new object[] { },
-                        excluded_payment_methods = new object[] { },
-                        installments = payment_methodsInstallments, //12,
-                        default_payment_method_id = payment_methodsDefault_payment_method_id, //"account_money"
+                        excluded_payment_types = excludedPaymentTypes,
+                        excluded_payment_methods = excludedPaymentMethods,
+                        installments = payment_methodsInstallments,
+                        default_payment_method_id = payment_methodsDefault_payment_method_id
                     },
                     notification_url = notificationUrl, //"https://www.your-site.com/webhook",
                     expires = expires, //true,
@@ -178,7 +189,18 @@ namespace Biblioteca.Infrastructure.Services
 
                     if (response.IsSuccessStatusCode)
                     {
-                        return responseContent;
+                        var json = JObject.Parse(responseContent);
+
+                        var initPoint = json["init_point"]?.ToString();
+                        //var externalReference = json["external_reference"]?.ToString();
+
+                        //var result = new
+                        //{
+                        //    init_point = initPoint,
+                        //    external_reference = externalReference
+                        //};
+
+                        return initPoint + '¯' + externalReference;
                     }
                     else
                     {
@@ -193,14 +215,14 @@ namespace Biblioteca.Infrastructure.Services
         }
 
 
-        public async Task<(bool Success, string ErrorMessage)> ProcessTransaction(string resource)
+        public async Task<(bool Success, string PaymentID, string ErrorMessage)> ProcessTransaction(string resource)
         {
             try
             {
                 string accessToken = await _GeneralServices.ObtenerData("uspACCESS_TOKENCsv", "");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    return (false, "Token de acceso no válido");
+                    return (false, "", "Token de acceso no válido");
                 }
                 string MerchantOrdersID = ExtractPaymentId(resource);
 
@@ -224,24 +246,27 @@ namespace Biblioteca.Infrastructure.Services
                 var combinedData = merchantOrderDetails + '¯' + paymentDetails;
                 var mensaje = await _GeneralServices.ObtenerData("uspInsertarTransaccionesCsv", combinedData);
 
+                //var ExternalReference = combinedData.Split('¯')[2];
+                var PaymentID = combinedData.Split('¯')[12];
+
                 if (mensaje.Split('|')[0] == "A")
                 {
                     _logger.LogInformation("successful: ", mensaje.Split('|')[1]);
-                    return (true, mensaje.Split('|')[1]);
+                    return (true, "", mensaje.Split('|')[1]);
                 }
                 else
                 {
                     _logger.LogInformation("oh no :( : ", mensaje.Split('|')[1]);
-                    return (false, mensaje.Split('|')[1]);
+                    return (false, "", mensaje.Split('|')[1]);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error en ProcessTransaction");
-                return (false, "Error interno en el controller al procesar la transacción, resource: " + resource);
+                return (false, "", "Error interno en el controller al procesar la transacción, resource: " + resource);
             }
         }
-        
+
         private string ParseMerchantOrder(string json)
         {
             var jsonDoc = JsonDocument.Parse(json);
@@ -406,7 +431,35 @@ namespace Biblioteca.Infrastructure.Services
         }
 
 
+        public async Task<string> VerificarPaymentExitosoAsync(string external_reference)
+        {
+            var data = await _GeneralServices.ObtenerData("uspObtenerStatusPaymentCSV", external_reference);
 
+            if (data.StartsWith('¯'))
+            {
+                return "false";
+            }
+            else
+            {
+                var dataPayment = data.Split('¯')[0];
+                var dataUsuario = data.Split('¯')[1];
+
+
+                var isExitodo = dataPayment.Split('|')[1]; // approved
+                var accredited = dataPayment.Split('|')[5]; // accredited
+                var pago = dataPayment.Split('|')[7]; // paid
+
+                if (isExitodo.Equals("approved") && accredited.Equals("accredited") && pago.Equals("paid"))
+                {
+                    return "true" + '¯' + dataUsuario;
+                }
+                else
+                {
+                    return "false";
+                }
+            }
+
+        }
 
     }
 }
