@@ -126,6 +126,100 @@ dotnet ef database update -p Biblioteca.Infrastructure -s Biblioteca.API
 
 ---
 
+# Guía de Instalación y Configuración
+
+## Requisitos Previos
+- .NET 6 SDK
+- SQL Server (local o remoto)
+- Visual Studio, VS Code o cualquier editor compatible
+- Git (opcional, para clonar el repositorio)
+
+## Estructura del Proyecto
+- `BaseSystem/` (API principal)
+- `Biblioteca.Application/` (lógica de negocio)
+- `Biblioteca.Domain/` (entidades y contratos)
+- `Biblioteca.Infrastructure/` (acceso a datos y servicios externos)
+
+## 1. Clonar el Repositorio
+```bash
+git clone <URL_DEL_REPOSITORIO>
+cd BaseSystem
+```
+
+## 2. Restaurar Dependencias
+```bash
+dotnet restore
+```
+
+## 3. Configuración de la Base de Datos
+Edita el archivo `BaseSystem/appsettings.json` y/o `appsettings.Development.json`:
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "Server=TU_SERVIDOR;Database=TU_BD;User Id=USUARIO;Password=CONTRASEÑA;"
+}
+```
+
+## 4. Configuración de JWT
+En el mismo archivo, ajusta:
+```json
+"Jwt": {
+  "Key": "clave_secreta_larga",
+  "Issuer": "TuIssuer",
+  "Audience": "TuAudience",
+  "DurationInMinutes": 60
+}
+```
+
+## 5. Configuración de Login Social (Opcional)
+En `appsettings.Development.json`:
+```json
+"Google": {
+  "ClientId": "TU_CLIENT_ID_GOOGLE",
+  "ClientSecret": "TU_CLIENT_SECRET_GOOGLE"
+},
+"Facebook": {
+  "AppId": "TU_APP_ID_FACEBOOK",
+  "AppSecret": "TU_APP_SECRET_FACEBOOK"
+}
+```
+
+## 6. Migraciones y Base de Datos
+Si usas migraciones de Entity Framework:
+```bash
+dotnet ef database update --project Biblioteca.Infrastructure --startup-project BaseSystem
+```
+
+## 7. Compilar y Ejecutar
+```bash
+dotnet build
+
+dotnet run --project BaseSystem
+```
+
+Accede a la documentación Swagger en:
+```
+http://localhost:5000/swagger
+```
+(o el puerto configurado)
+
+## 8. Endpoints Principales
+- `POST /api/Usuario/login` — Login con usuario y contraseña
+- `POST /api/Usuario/register` — Registro de usuario
+- `POST /api/Usuario/login-social` — Login con Google/Facebook
+- `POST /api/Usuario/refresh` — Renovar JWT con refresh token
+- `GET /api/Usuario/protegido-admin` — Ejemplo de endpoint protegido por permisos
+
+## 9. Notas Importantes
+- Asegúrate de agregar la referencia de proyecto `Biblioteca.Domain` a `Biblioteca.Infrastructure` si tienes errores de tipos no encontrados.
+- Personaliza los procedimientos almacenados y lógica de roles/permisos según tu base de datos.
+- Para producción, configura correctamente los secretos y las URLs permitidas en CORS.
+
+## 10. Soporte y Contribución
+- Si tienes dudas, abre un issue o contacta al autor.
+- ¡Se aceptan PRs para mejorar la plantilla!
+
+---
+
 ## Estructura del Código
 
 ### **Controladores (API)**

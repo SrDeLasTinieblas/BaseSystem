@@ -46,6 +46,32 @@ namespace Biblioteca.Infrastructure.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-
+        public string GenerateJwtToken(string Email, string role, int expiresMinutes, Dictionary<string, string>? extraClaims = null)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, Email),
+                new Claim(ClaimTypes.Role, role),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+            if (extraClaims != null)
+            {
+                foreach (var kv in extraClaims)
+                {
+                    claims.Add(new Claim(kv.Key, kv.Value));
+                }
+            }
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var peruTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+            var peruTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, peruTimeZone);
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: peruTime.AddMinutes(expiresMinutes),
+                signingCredentials: creds);
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
     }
 }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Biblioteca.Infrastructure.Persistence
 {
-    public class AppDbContext : DbContext
+    public partial class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

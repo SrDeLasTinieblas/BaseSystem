@@ -29,7 +29,7 @@ namespace Biblioteca.Infrastructure.Services
             _jWTServices = jWTServices;
         }
 
-        public async Task<string> AuthenticateUsuario(string data) // StevenLee893@live.com|PassTextPlain
+        public async Task<string> AuthenticateUsuario(string data, List<string>? permisos = null)
         {
             // Busco mediante el correo la contraseña hasheada que esta en la base de datos
             var obtenerHash = await _GeneralServices.ObtenerData("uspAutenticacionCsv", data); // obtenerHash = $2a$11$n9C1TzjBNcdd6ql57B3pq.2PQhOK3cYQQjRagVC7HZ5jMJSC5YDj2
@@ -83,7 +83,14 @@ namespace Biblioteca.Infrastructure.Services
                 return ("E|La contraseña no coincide");
             }
 
-            var token = _jWTServices.GenerateJwtToken(emailInput, rolBD, DuracionTokenSesion);
+            // Obtener permisos desde la BD o usar los que se pasen
+            var permisosUsuario = permisos ?? new List<string> { "admin:read" }; // Simulación, reemplaza por consulta real
+            var extraClaims = new Dictionary<string, string>();
+            foreach (var permiso in permisosUsuario)
+            {
+                extraClaims.Add("permission", permiso);
+            }
+            var token = _jWTServices.GenerateJwtToken(emailInput, rolBD, DuracionTokenSesion, extraClaims);
             return token;
         }
 

@@ -1,15 +1,17 @@
-
 using Biblioteca.Infrastructure.Persistence;
 using Biblioteca.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Facebook;
 using System.Text;
+using BaseSystem.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Obtener la cadena de conexión desde appsettings.json
+// Obtener la cadena de conexin desde appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // Controladores
@@ -54,7 +56,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Autenticación con JWT
+// Autenticacin con JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -93,7 +95,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddHttpContextAccessor();
 
-// Servicios Personalizados (inyección de dependencias)
+// Servicios Personalizados (inyeccin de dependencias)
 builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<GeneralServices>();
@@ -101,15 +103,29 @@ builder.Services.AddScoped<UsuarioServices>();
 builder.Services.AddScoped<JWTServices>();
 builder.Services.AddScoped<EmailServices>();
 builder.Services.AddScoped<MercadoPagoServices>();
+builder.Services.AddScoped<RefreshTokenService>();
+
+// AutenticaciÃ³n Social
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Google:ClientSecret"];
+    })
+    .AddFacebook(options =>
+    {
+        options.AppId = builder.Configuration["Facebook:AppId"];
+        options.AppSecret = builder.Configuration["Facebook:AppSecret"];
+    });
 
 var app = builder.Build();
 
-// Servicio de Email (configuración de SMTP)
+// Servicio de Email (configuracin de SMTP)
 //builder.Services.AddScoped<IEmailService>(provider =>
 //    new EmailService("smtp.gmail.com", 587, "happynavidad25@gmail.com", "meic wjxw solk zbgx"));
 
 
-// Configuración de Swagger (para desarrollo, staging y producción)
+// Configuraciï¿½n de Swagger (para desarrollo, staging y producciï¿½n)
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging() || app.Environment.IsProduction())
 {
     app.UseSwagger();
@@ -129,12 +145,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Middleware de Autenticación y Autorización
+// Middleware de Autenticaciï¿½n y Autorizaciï¿½n
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Mapeo de controladores
 app.MapControllers();
 
-// Ejecución de la Aplicación
+// Ejemplo de uso de middleware de permisos global (puedes usarlo por endpoint tambiÃ©n)
+// app.UsePermission("admin:read");
+
+// Ejecucin de la Aplicacin
 app.Run();
