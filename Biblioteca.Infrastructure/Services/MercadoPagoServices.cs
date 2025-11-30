@@ -215,14 +215,14 @@ namespace Biblioteca.Infrastructure.Services
         }
 
 
-        public async Task<(bool Success, string PaymentID, string ErrorMessage)> ProcessTransaction(string resource)
+        public async Task<(bool Success, string ErrorMessage)> ProcessTransaction(string resource)
         {
             try
             {
                 string accessToken = await _GeneralServices.ObtenerData("uspACCESS_TOKENCsv", "");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    return (false, "", "Token de acceso no válido");
+                    return (false, "Token de acceso no válido");
                 }
                 string MerchantOrdersID = ExtractPaymentId(resource);
 
@@ -252,18 +252,18 @@ namespace Biblioteca.Infrastructure.Services
                 if (mensaje.Split('|')[0] == "A")
                 {
                     _logger.LogInformation("successful: ", mensaje.Split('|')[1]);
-                    return (true, "", mensaje.Split('|')[1]);
+                    return (true, mensaje.Split('|')[1]);
                 }
                 else
                 {
                     _logger.LogInformation("oh no :( : ", mensaje.Split('|')[1]);
-                    return (false, "", mensaje.Split('|')[1]);
+                    return (false, mensaje.Split('|')[1]);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error en ProcessTransaction");
-                return (false, "", "Error interno en el controller al procesar la transacción, resource: " + resource);
+                return (false, "Error interno en el controller al procesar la transacción, resource: " + resource);
             }
         }
 
